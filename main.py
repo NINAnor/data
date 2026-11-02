@@ -17,7 +17,7 @@ logging.basicConfig(level=(logging.DEBUG if DEBUG else logging.INFO))
 
 logger = logging.getLogger(__name__)
 csw = CatalogueServiceWeb("https://csw.nina.no/csw")
-app = Django(DEBUG=DEBUG, STYLE_THEME="tailwind")
+app = Django(DEBUG=DEBUG)
 
 
 @app.route("/", distill_file="index.html")

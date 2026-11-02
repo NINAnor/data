@@ -17,7 +17,6 @@ authors = [
 dependencies = [
   "django-distill>=4.0.6",
   "django-environ",
-  "django-style>=0.3.2",
   "nanodjango>=0.17.1",
   "owslib>=0.35.0"
 ]
@@ -35,7 +34,7 @@ datasets = "main:start"
 known_first_party = ["main"]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["django-distill", "django-style"]
+DEP002 = ["django-distill"]
 
 [tool.pixi.dependencies]
 bun = ">=1.4,<2"
@@ -49,12 +48,15 @@ dev = { features = ["dev"], solve-group = "default" }
 datasets = { path = ".", editable = true }
 
 [tool.pixi.tasks]
-build-static = "python main.py manage distill generate --output-directory output/ --collectstatic --force"
-check = { depends-on = ["lint", "format-check", "deptry"] }
+build-css = { cmd = "bun run build:css", depends-on = ["install-web"] }
+build-static = { cmd = "python main.py manage distill generate --output-directory output/ --collectstatic --force", depends-on = ["build-css"] }
+check = { depends-on = ["lint", "format-check", "deptry", "build-css"] }
 deptry = "deptry ."
 format-check = "ruff format --check ."
+install-web = "bun install --frozen-lockfile"
 lint = "ruff check ."
-start = "python main.py"
+start = { cmd = "python main.py", depends-on = ["build-css"] }
+watch-css = { cmd = "bun run watch:css", depends-on = ["install-web"] }
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]

@@ -1,0 +1,14 @@
+{
+  "name": "datasets-assets",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./assets/css/app.css -o ./static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./assets/css/app.css -o ./static/css/app.css --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.0",
+    "daisyui": "5.5.19",
+    "tailwindcss": "4.3.0"
+  }
+}

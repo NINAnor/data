@@ -13,29 +13,33 @@ uv run prek install # optional
 
 
 ### Run
-To execute your software you have two options:
-
-**Option 1: Direct execution**
+Start the app with Pixi so the local stylesheet is generated first:
 ```bash
+pixi run -e dev start
+```
+
+For direct uv execution, generate the stylesheet first:
+```bash
+pixi run -e dev build-css
 uv run main.py
 ```
 
-**Option 2: Run as installed package**
+Run the installed command after building CSS:
 ```bash
 uvx --from . datasets
 ```
 
 ### Development
-Just run `uv run main.py` and you are good to go!
+Start the app with Pixi so it builds the stylesheet first:
+
+```bash
+pixi run -e dev start
+```
+
+To rebuild CSS while editing, run `pixi run -e dev watch-css` in a second terminal.
 
 ### Build the static site
 The catalogue page is generated from the live NINA CSW endpoint:
-
-```bash
-uv run main.py manage distill generate --output-directory output/ --collectstatic --force
-```
-
-Or with Pixi:
 
 ```bash
 pixi run -e dev build-static
@@ -44,7 +48,8 @@ pixi run -e dev build-static
 The generated site is written to `output/`; each build recreates that generated directory.
 
 ### Pixi (optional)
-Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge.
+Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge. Bun installs DaisyUI and Tailwind CSS from `package.json`.
+Edit `assets/css/app.css` to change the DaisyUI `nina` palette, and `templates/base.html` to change the shared page layout.
 
 ```bash
 pixi install -e dev
@@ -102,6 +107,7 @@ If you are using visual studio code install the recommended extensions
 - uv
 - Pixi (optional)
 - Bun (via Pixi)
+- DaisyUI and Tailwind CSS (via Bun)
 - prek (optional)
 
 #### What is an environment variable? and why should I use them?

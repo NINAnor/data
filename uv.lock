@@ -286,7 +286,6 @@ source = { editable = "." }
 dependencies = [
     { name = "django-distill" },
     { name = "django-environ" },
-    { name = "django-style" },
     { name = "nanodjango" },
     { name = "owslib", version = "0.35.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "owslib", version = "0.36.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -302,7 +301,6 @@ dev = [
 requires-dist = [
     { name = "django-distill", specifier = ">=4.0.6" },
     { name = "django-environ" },
-    { name = "django-style", specifier = ">=0.3.2" },
     { name = "nanodjango", specifier = ">=0.17.1" },
     { name = "owslib", specifier = ">=0.35.0" },
 ]
@@ -414,19 +412,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/8e/8c12dd873d76762e61fa7225bbab5d2b87dce358a8f7d764508b1363c17c/django_ninja-1.7.3.tar.gz", hash = "sha256:8a73ecccaa86639202427e81667b8fca6dfc250d2b6e5108369688029a4cb593", size = 2342134, upload-time = "2026-10-29T10:21:03.197Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/7d/7df99529f54178c67282d25983aad66bc0593ffbf5c1d420bb2840389c90/django_ninja-1.7.3-py3-none-any.whl", hash = "sha256:5e3c2dcead83a2512ea772dbc435ca51632cf46bf3be1523bac41e5bb394891c", size = 2376577, upload-time = "2026-10-29T10:21:01.199Z" },
-]
-
-[[package]]
-name = "django-style"
-version = "0.3.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/36/0b/ba66f803f769fcb239a10b365d53c4e8230e994b68cf1cd5d2bf2a584660/django_style-0.3.2.tar.gz", hash = "sha256:2e6cadd5d845a0e9f83628f7eed55a79d27d62e01f3e56a6d0a2d445e6ddcf26", size = 12509, upload-time = "2026-05-01T02:40:43.463Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/31/de2cd1d04d821c6b10831240a1d42b53529009a006a4f1b36e5a14f6901f/django_style-0.3.2-py3-none-any.whl", hash = "sha256:8bf1a42658bf36d6bb43c62afb8001b283e86d0da028537e77e1a9cac2377c9a", size = 15086, upload-time = "2026-05-01T02:40:41.923Z" },
 ]
 
 [[package]]

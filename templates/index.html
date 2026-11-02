@@ -5,13 +5,15 @@
     {% for identifier, record in records %}
       <article
         id="{{ identifier }}"
-        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200"
+        class="card border border-base-300 bg-base-100 shadow-sm"
       >
-        <h2 class="mb-3 text-xl font-bold">{{ record.title }}</h2>
-        <p class="text-gray-700">{{ record.abstract }}</p>
+        <div class="card-body">
+          <h2 class="card-title text-primary">{{ record.title }}</h2>
+          <p>{{ record.abstract }}</p>
+        </div>
       </article>
     {% empty %}
-      <p>No catalogue records found.</p>
+      <p class="col-span-full rounded-box bg-base-100 p-6">No catalogue records found.</p>
     {% endfor %}
   </div>
 {% endblock %}

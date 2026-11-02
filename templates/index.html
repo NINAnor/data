@@ -2,14 +2,16 @@
 
 {% block content %}
   <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {% for identifier, record in records %}
+    {% for dataset in datasets %}
       <article
-        id="{{ identifier }}"
+        id="{{ dataset.identifier }}"
         class="card border border-base-300 bg-base-100 shadow-sm"
       >
         <div class="card-body">
-          <h2 class="card-title text-primary">{{ record.title }}</h2>
-          <p>{{ record.abstract }}</p>
+          <h2 class="card-title text-primary">
+            <a href="/datasets/{{ dataset.slug }}/">{{ dataset.title }}</a>
+          </h2>
+          {% if dataset.abstract %}<p>{{ dataset.abstract }}</p>{% endif %}
         </div>
       </article>
     {% empty %}

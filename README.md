@@ -39,7 +39,7 @@ pixi run -e dev start
 To rebuild CSS while editing, run `pixi run -e dev watch-css` in a second terminal.
 
 ### Build the static site
-The catalogue page is generated from the live NINA CSW endpoint:
+The catalogue index and one metadata page per dataset are generated from the live NINA CSW endpoint. The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated:
 
 ```bash
 pixi run -e dev build-static

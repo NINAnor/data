@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#425563">
     <title>{% block head_title %}{{ title|default:"NINA Public Catalog" }}{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_head %}{% endblock %}
   </head>
   <body class="min-h-screen bg-base-200 text-base-content">
     <header class="navbar bg-primary px-4 text-primary-content shadow-sm sm:px-8">

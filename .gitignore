@@ -177,6 +177,10 @@ pyrightconfig.json
 
 # Pixi environments
 .pixi/
+
+# Generated static site
+/output/
+/static-collected/
 # pixi environments
 .pixi/*
 !.pixi/config.toml

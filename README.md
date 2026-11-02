@@ -28,6 +28,21 @@ uvx --from . datasets
 ### Development
 Just run `uv run main.py` and you are good to go!
 
+### Build the static site
+The catalogue page is generated from the live NINA CSW endpoint:
+
+```bash
+uv run main.py manage distill generate --output-directory output/ --collectstatic --force
+```
+
+Or with Pixi:
+
+```bash
+pixi run -e dev build-static
+```
+
+The generated site is written to `output/`; each build recreates that generated directory.
+
 ### Pixi (optional)
 Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge.
 

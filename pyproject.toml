@@ -1,3 +1,7 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61"]
+
 [dependency-groups]
 dev = [
   "deptry",
@@ -11,7 +15,11 @@ authors = [
 # PEP 621 project metadata
 # See https://www.python.org/dev/peps/pep-0621/
 dependencies = [
-  "django-environ"
+  "django-distill>=4.0.6",
+  "django-environ",
+  "django-style>=0.3.2",
+  "nanodjango>=0.17.1",
+  "owslib>=0.35.0"
 ]
 description = ""
 license = "GPL-3.0+"
@@ -26,6 +34,9 @@ datasets = "main:start"
 [tool.deptry]
 known_first_party = ["main"]
 
+[tool.deptry.per_rule_ignores]
+DEP002 = ["django-distill", "django-style"]
+
 [tool.pixi.dependencies]
 bun = ">=1.4,<2"
 python = ">=3.15,<3.16"
@@ -38,6 +49,7 @@ dev = { features = ["dev"], solve-group = "default" }
 datasets = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+build-static = "python main.py manage distill generate --output-directory output/ --collectstatic --force"
 check = { depends-on = ["lint", "format-check", "deptry"] }
 deptry = "deptry ."
 format-check = "ruff format --check ."
@@ -55,6 +67,13 @@ fix = true
 [tool.ruff.lint]
 ignore = ["COM812"]
 select = ["E", "W", "I", "F", "UP", "S", "B", "A", "COM", "LOG", "PTH", "Q"]
+
+[tool.setuptools]
+packages = ["templates"]
+py-modules = ["main"]
+
+[tool.setuptools.package-data]
+templates = ["*.html"]
 
 [tool.uv]
 package = true

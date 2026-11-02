@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {% for identifier, record in records %}
+      <article
+        id="{{ identifier }}"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200"
+      >
+        <h2 class="mb-3 text-xl font-bold">{{ record.title }}</h2>
+        <p class="text-gray-700">{{ record.abstract }}</p>
+      </article>
+    {% empty %}
+      <p>No catalogue records found.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

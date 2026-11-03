@@ -29,6 +29,7 @@ jobs:
         uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         with:
           pixi-version: v0.59.0
+          pixi-bin-path: ${{ runner.temp }}/pixi-${{ github.run_id }}-${{ github.run_attempt }}/bin/pixi
           environments: dev
           locked: true
 

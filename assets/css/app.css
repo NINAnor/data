@@ -1,5 +1,19 @@
 @import "tailwindcss";
 @source "../../templates";
+@source "../../static/js";
+
+.search-sidebar {
+  align-self: start;
+}
+
+.keyword-options {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.search-map {
+  height: 22rem;
+}
 
 @plugin "daisyui" {
   themes: nina --default;

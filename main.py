@@ -406,6 +406,24 @@ def catalogue(request):
     )
 
 
+@app.route("/search/", distill_file="search/index.html")
+def dataset_search(request):
+    """Render the static shell for browser-side CSW dataset search."""
+    datasets = catalogue_datasets()
+    return app.render(
+        request,
+        "search.html",
+        context={
+            "site_title": "NINA Public Catalog",
+            "title": "Search datasets",
+            "detail_urls": {
+                dataset["identifier"]: f"/datasets/{dataset['slug']}/"
+                for dataset in datasets
+            },
+        },
+    )
+
+
 @app.route("/datasets/<slug:slug>/", distill_func=dataset_pages)
 def dataset_detail(request, slug):
     """Render one dataset's ISO metadata."""

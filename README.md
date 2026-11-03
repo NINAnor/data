@@ -47,6 +47,10 @@ pixi run -e dev build-static
 
 The generated site is written to `output/`; each build recreates that generated directory.
 
+The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query NINA CSW directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
+
+The NINA CSW endpoint must allow CORS from the deployed site origin for GET and POST requests, including OPTIONS preflight and the XML POST content type. Without that endpoint configuration, search displays a connection error and offers retry; the static catalogue pages remain available.
+
 ### Pixi (optional)
 Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge. Bun installs DaisyUI and Tailwind CSS from `package.json`.
 Edit `assets/css/app.css` to change the DaisyUI `nina` palette, and `templates/base.html` to change the shared page layout.

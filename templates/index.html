@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <section class="mb-8 flex flex-col gap-4 rounded-box border border-base-300 bg-base-100 p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-    <p class="max-w-3xl">Search the NINA catalogue by keyword, topic, date, or map area.</p>
-    <a class="btn btn-primary shrink-0" href="/search/">Search datasets</a>
-  </section>
-
   <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {% for dataset in datasets %}
       <article

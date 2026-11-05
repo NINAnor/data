@@ -1,6 +1,5 @@
 const PYODIDE_VERSION = "0.29.5";
 const PAGE_SIZE = 10;
-const CSW_URL = "https://csw.nina.no/csw";
 const PYODIDE_BASE = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 
 let pyodide;
@@ -21,13 +20,12 @@ from owslib.fes import (
 )
 
 PAGE_SIZE = 10
-CSW_URL = "https://csw.nina.no/csw"
 client = None
 
 
-def initialize_catalogue_json():
+def initialize_catalogue_json(csw_url):
     global client
-    client = CatalogueServiceWeb(CSW_URL, version="2.0.2", timeout=30)
+    client = CatalogueServiceWeb(csw_url, version="2.0.2", timeout=30)
     client.getdomain("dc:subject", dtype="property")
 
     keywords = set()
@@ -142,7 +140,7 @@ def search_json(payload_json):
     )
 `;
 
-async function initialize() {
+async function initialize(cswUrl) {
   if (initialization) return initialization;
 
   initialization = (async () => {
@@ -158,8 +156,9 @@ await micropip.install("OWSLib==0.36.0")
 `);
     await pyodide.runPythonAsync(PYTHON_SEARCH);
 
-    self.postMessage({ type: "status", message: "Connecting to NINA catalogue…" });
-    const keywordsJson = await pyodide.runPythonAsync("initialize_catalogue_json()");
+    self.postMessage({ type: "status", message: "Connecting to catalogue…" });
+    pyodide.globals.set("_csw_url", cswUrl);
+    const keywordsJson = await pyodide.runPythonAsync("initialize_catalogue_json(_csw_url)");
     const keywords = JSON.parse(String(keywordsJson));
     self.postMessage({ type: "ready", keywords });
   })();
@@ -175,7 +174,7 @@ await micropip.install("OWSLib==0.36.0")
 self.addEventListener("message", async ({ data }) => {
   if (data?.type === "init") {
     try {
-      await initialize();
+      await initialize(data.cswUrl);
     } catch (error) {
       self.postMessage({
         type: "error",

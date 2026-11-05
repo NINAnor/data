@@ -19,6 +19,7 @@ const previousButton = document.querySelector("#previous-page");
 const nextButton = document.querySelector("#next-page");
 const pageStatus = document.querySelector("#page-status");
 const detailUrls = JSON.parse(document.querySelector("#dataset-detail-urls").textContent);
+const cswUrl = JSON.parse(document.querySelector("#csw-endpoint").textContent);
 
 const PAGE_SIZE = 10;
 const MAPLIBRE_URL = "https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.mjs";
@@ -54,8 +55,8 @@ function setFailure(stage, message) {
   retryButton.hidden = false;
   setStatus(
     stage === "init"
-      ? "Could not connect to NINA’s catalogue. Check the connection and CORS configuration, then retry."
-      : "Search failed. Your filters are unchanged. Check the connection and CORS configuration, then retry.",
+       ? "Could not connect to the configured catalogue. Check the connection and CORS configuration, then retry."
+       : "Search failed. Your filters are unchanged. Check the connection and CORS configuration, then retry.",
     "error"
   );
 }
@@ -72,7 +73,7 @@ function startWorker() {
   worker.addEventListener("error", (event) => {
     setFailure("init", event.message || "Worker failed to load.");
   });
-  worker.postMessage({ type: "init" });
+  worker.postMessage({ type: "init", cswUrl });
 }
 
 function handleWorkerMessage({ data }) {
@@ -242,7 +243,7 @@ function runSearch(state, { updateUrl: shouldUpdateUrl = true } = {}) {
   requestId += 1;
   searchButton.disabled = false;
   retryButton.hidden = true;
-  setStatus("Searching the NINA catalogue…");
+  setStatus("Searching the configured catalogue…");
   worker.postMessage({ type: "search", requestId, payload: activeState });
 }
 

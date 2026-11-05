@@ -1,32 +1,53 @@
 {% load static %}
 <!doctype html>
-<html lang="en" data-theme="nina">
+<html lang="{{ site.language|default:'en' }}" data-theme="nina">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#425563">
-    <title>{% block head_title %}{{ title|default:"NINA Public Catalog" }}{% endblock %}</title>
+    <meta name="description" content="{{ site.description }}">
+    <meta name="theme-color" content="#163546">
+    <meta property="og:title" content="{{ title|default:site.title }}">
+    <meta property="og:description" content="{{ site.description }}">
+    <meta property="og:type" content="website">
+    <title>{% block head_title %}{{ title|default:site.title }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'assets/favicon.svg' %}">
+    <link rel="preload" href="{% static 'assets/fonts/open-sans-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     {% block extra_head %}{% endblock %}
   </head>
-  <body class="flex min-h-screen flex-col bg-base-200 text-base-content">
-    <header class="navbar bg-primary px-4 text-primary-content shadow-sm sm:px-8">
-      <div class="navbar-start">
-        <a class="btn btn-ghost text-xl" href="/">{{ site_title|default:"NINA Public Catalog" }}</a>
-      </div>
-      <div class="navbar-end">
-        <a class="btn btn-ghost" href="/search/">Search datasets</a>
-        <a class="btn btn-ghost" href="https://www.nina.no">NINA.no</a>
-      </div>
+  <body class="flex min-h-screen flex-col bg-base-200 font-sans text-base-content">
+    <header class="border-b border-base-300 bg-base-100">
+      <nav class="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-6 px-4 sm:px-8" aria-label="Main navigation">
+        <a class="shrink-0" href="/" aria-label="{{ site.title }} home">
+          <img class="h-auto w-44 sm:w-52" src="{% static 'assets/logo.svg' %}" alt="NINA — {{ site.title }}" width="209" height="49">
+        </a>
+        <div class="flex items-center gap-2 sm:gap-6">
+          <a class="btn btn-accent btn-sm sm:btn-md" href="/search/">Search datasets</a>
+        </div>
+      </nav>
     </header>
 
-    <main class="mx-auto min-h-[70vh] max-w-7xl flex-1 px-4 py-8 sm:px-8">
-      <h1 class="mb-6 text-3xl font-bold">{{ title|default:"NINA Public Catalog" }}</h1>
+    <main class="mx-auto min-h-[70vh] w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
+      <h1 class="mb-6 text-3xl font-bold tracking-tight text-primary sm:text-4xl">{{ title|default:site.title }}</h1>
       {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer footer-center bg-neutral p-6 text-neutral-content">
-      <p>Norwegian Institute for Nature Research (NINA)</p>
+    <footer class="bg-primary text-primary-content">
+      <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-8 sm:py-12">
+        <div class="space-y-2">
+          <p class="font-semibold">{{ footer.organization }}</p>
+          {% for line in footer.address %}<p class="text-sm">{{ line }}</p>{% endfor %}
+        </div>
+        <div class="space-y-5 sm:text-right">
+          <div class="flex flex-col gap-2 text-sm sm:items-end">
+            {% if footer.phone %}<a class="w-fit underline-offset-4 hover:underline" href="{{ footer.phone.href }}">{{ footer.phone.label }}</a>{% endif %}
+            {% if footer.email %}<a class="w-fit underline-offset-4 hover:underline" href="{{ footer.email.href }}">{{ footer.email.label }}</a>{% endif %}
+          </div>
+          <nav class="flex flex-wrap gap-x-5 gap-y-2 text-sm sm:justify-end" aria-label="Footer navigation">
+            {% for link in footer.links %}<a class="underline-offset-4 hover:underline" href="{{ link.url }}">{{ link.label }}</a>{% endfor %}
+          </nav>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

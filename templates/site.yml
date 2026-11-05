@@ -1,0 +1,24 @@
+site:
+  title: NINA Public Catalog
+  description: Search and explore datasets from the Norwegian Institute for Nature Research.
+  language: en
+
+catalogue:
+  csw_url: https://csw.nina.no/csw
+
+footer:
+  organization: Norwegian Institute for Nature Research (NINA)
+  address:
+    - Postboks 5685 Torgarden
+    - 7485 Trondheim
+  phone:
+    label: (+47) 73 80 14 00
+    href: "tel:+4773801400"
+  email:
+    label: firmapost@nina.no
+    href: "mailto:firmapost@nina.no"
+  links:
+    - label: Contact NINA
+      url: https://www.nina.no/kontakt-oss
+    - label: NINA.no
+      url: https://www.nina.no

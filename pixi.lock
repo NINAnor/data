@@ -288,7 +288,7 @@ packages:
 - pypi: ./
   name: datasets
   version: 0.1.0
-  sha256: 2996e820602191be67f09633d062021a4befcf79eedfcd71870dfb961b284e2b
+  sha256: 46bd5bc80ff6f6d037dde560a84220b51f173ce4771ffde3827bd0e47cd5b699
   requires_dist:
   - django>=5.2
   - django-distill>=4.0.6
@@ -296,6 +296,7 @@ packages:
   - nanodjango>=0.17.1
   - owslib>=0.35.0
   - pygeometa>=0.19.0
+  - pyyaml>=6.0
   requires_python: '>=3.10'
   editable: true
 - pypi: https://files.pythonhosted.org/packages/72/9c/6f6f9125bac74b5d5d2af89536cbdb3fa159b6466aa097b74e7e85e8e030/deptry-0.25.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl

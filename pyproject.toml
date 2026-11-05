@@ -20,7 +20,8 @@ dependencies = [
   "django-environ",
   "nanodjango>=0.17.1",
   "owslib>=0.35.0",
-  "pygeometa>=0.19.0"
+  "pygeometa>=0.19.0",
+  "pyyaml>=6.0"
 ]
 description = ""
 license = "GPL-3.0+"
@@ -53,11 +54,12 @@ datasets = { path = ".", editable = true }
 build-css = { cmd = "bun run build:css", depends-on = ["install-web"] }
 build-static = { cmd = "python main.py manage distill generate --output-directory output/ --collectstatic --force", depends-on = ["build-css"] }
 check = { depends-on = ["lint", "format-check", "deptry", "build-css"] }
+collect-static = { cmd = "python main.py manage collectstatic --noinput", depends-on = ["build-css"] }
 deptry = "deptry ."
 format-check = "ruff format --check ."
 install-web = "bun install --frozen-lockfile"
 lint = "ruff check ."
-start = { cmd = "python main.py", depends-on = ["build-css"] }
+start = { cmd = "python main.py", depends-on = ["collect-static"] }
 watch-css = { cmd = "bun run watch:css", depends-on = ["install-web"] }
 
 [tool.pixi.workspace]
@@ -77,7 +79,7 @@ packages = ["templates"]
 py-modules = ["main"]
 
 [tool.setuptools.package-data]
-templates = ["*.html"]
+templates = ["*.html", "*.yml"]
 
 [tool.uv]
 package = true

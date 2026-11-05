@@ -2,6 +2,18 @@
 @source "../../templates";
 @source "../../static/js";
 
+@font-face {
+  font-family: "Open Sans";
+  src: url("../assets/fonts/open-sans-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
 .search-sidebar {
   align-self: start;
 }
@@ -25,33 +37,33 @@
   prefersdark: false;
   color-scheme: light;
 
-  --color-base-100: oklch(100% 0 0);
-  --color-base-200: oklch(98% 0 0);
-  --color-base-300: rgba(0, 0, 0, 0.06);
-  --color-base-content: oklch(21% 0.006 285.885);
-  --color-primary: #425563;
-  --color-primary-content: oklch(98% 0.003 247.858);
-  --color-secondary: #004f71;
-  --color-secondary-content: oklch(98% 0.003 247.858);
-  --color-accent: #00a4b0;
-  --color-accent-content: oklch(12% 0.042 264.695);
-  --color-neutral: oklch(14% 0.005 285.823);
-  --color-neutral-content: oklch(92% 0.004 286.32);
-  --color-info: #2dccd3;
-  --color-info-content: oklch(29% 0.066 243.157);
-  --color-success: #7a9a01;
-  --color-success-content: oklch(26% 0.051 172.552);
-  --color-warning: #ffb25b;
-  --color-warning-content: oklch(41% 0.112 45.904);
-  --color-error: oklch(71% 0.194 13.428);
-  --color-error-content: oklch(27% 0.105 12.094);
+  --color-base-100: #ffffff;
+  --color-base-200: #f2f2f2;
+  --color-base-300: #e6e6e6;
+  --color-base-content: #163546;
+  --color-primary: #163546;
+  --color-primary-content: #ffffff;
+  --color-secondary: #2f7087;
+  --color-secondary-content: #ffffff;
+  --color-accent: #cc8614;
+  --color-accent-content: #ffffff;
+  --color-neutral: #163546;
+  --color-neutral-content: #ffffff;
+  --color-info: #4d8ea1;
+  --color-info-content: #163546;
+  --color-success: #33776f;
+  --color-success-content: #ffffff;
+  --color-warning: #e9b726;
+  --color-warning-content: #163546;
+  --color-error: #a36014;
+  --color-error-content: #ffffff;
 
-  --radius-selector: 0rem;
-  --radius-field: 0rem;
-  --radius-box: 0rem;
+  --radius-selector: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-box: 0.125rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
   --depth: 0;
-  --noise: 1;
+  --noise: 0;
 }

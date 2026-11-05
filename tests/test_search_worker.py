@@ -73,10 +73,20 @@ class SearchWorkerTests(unittest.TestCase):
                 self.property_name = property_name
                 self.dtype = dtype
 
-        self.namespace["CatalogueServiceWeb"] = lambda *args, **kwargs: DomainClient()
-        keywords = json.loads(self.namespace["initialize_catalogue_json"]())
+        clients = []
+
+        def create_client(url, **kwargs):
+            client = DomainClient()
+            client.url = url
+            clients.append(client)
+            return client
+
+        self.namespace["CatalogueServiceWeb"] = create_client
+        endpoint = "https://example.test/csw"
+        keywords = json.loads(self.namespace["initialize_catalogue_json"](endpoint))
 
         self.assertEqual(keywords, ["birds", "lynx", "Occurrence", "wolverine"])
+        self.assertEqual(clients[0].url, endpoint)
 
 
 if __name__ == "__main__":

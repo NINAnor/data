@@ -8,12 +8,12 @@
 {% block content %}
   <noscript>
     <p class="mb-6 rounded-box border border-warning/40 bg-warning/10 p-4 text-sm">
-      Dataset search requires JavaScript to query the NINA catalogue.
+      Dataset search requires JavaScript to query the configured catalogue.
     </p>
   </noscript>
 
   <p class="mb-6 max-w-3xl text-base-content/75">
-    Search NINA’s CSW catalogue by metadata text, keywords, area, or metadata update date.
+    Search the configured CSW catalogue by metadata text, keywords, area, or metadata update date.
   </p>
 
   <div class="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)]">
@@ -89,5 +89,6 @@
   </div>
 
   {{ detail_urls|json_script:"dataset-detail-urls" }}
+  {{ catalogue.csw_url|json_script:"csw-endpoint" }}
   <script type="module" src="{% static 'js/search.js' %}"></script>
 {% endblock %}

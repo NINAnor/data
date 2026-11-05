@@ -7,6 +7,7 @@ import re
 from functools import cache
 
 import environ
+import yaml
 from django.http import Http404
 from django.utils.text import slugify
 from nanodjango import Django
@@ -23,10 +24,35 @@ logging.basicConfig(level=(logging.DEBUG if DEBUG else logging.INFO))
 
 logger = logging.getLogger(__name__)
 app = Django(DEBUG=DEBUG)
-CSW_URL = "https://csw.nina.no/csw"
 CSW_PAGE_SIZE = 100
 CSW_TYPE_NAMES = "gmd:MD_Metadata"
 CSW_OUTPUT_SCHEMA = "http://www.isotc211.org/2005/gmd"
+SITE_CONFIG_PATH = BASE_DIR / "templates" / "site.yml"
+
+
+def load_site_config(path=SITE_CONFIG_PATH):
+    """Load site branding and footer content from the YAML configuration."""
+    config = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(config, dict):
+        raise ValueError(f"Site config must contain a YAML mapping: {path}")
+    for section in ("site", "catalogue", "footer"):
+        if not isinstance(config.get(section), dict):
+            raise ValueError(f"Site config must define a '{section}' mapping: {path}")
+    csw_url = config["catalogue"].get("csw_url")
+    if not isinstance(csw_url, str) or not csw_url.startswith(("http://", "https://")):
+        raise ValueError(f"Site config must define a valid catalogue.csw_url: {path}")
+    return config
+
+
+@cache
+def site_config():
+    """Return the cached shared site configuration."""
+    return load_site_config()
+
+
+def shared_template_context():
+    """Return site-wide settings shared by every page template."""
+    return site_config()
 
 
 def fetch_all_records(csw, page_size=CSW_PAGE_SIZE):
@@ -354,8 +380,8 @@ def spatial_extent(identification):
 
 @cache
 def catalogue_datasets():
-    """Load and cache all dataset records from the NINA CSW catalogue."""
-    csw = CatalogueServiceWeb(CSW_URL)
+    """Load and cache all dataset records from the configured CSW catalogue."""
+    csw = CatalogueServiceWeb(site_config()["catalogue"]["csw_url"])
     records = fetch_all_records(csw)
     datasets = []
 
@@ -406,12 +432,13 @@ def dataset_pages():
 @app.route("/", distill_file="index.html")
 def catalogue(request):
     """Render the catalogue index with links to every dataset page."""
+    config = shared_template_context()
     return app.render(
         request,
         "index.html",
         context={
-            "site_title": "NINA Public Catalog",
-            "title": "NINA Public Catalog",
+            **config,
+            "title": config["site"]["title"],
             "datasets": catalogue_datasets(),
         },
     )
@@ -420,12 +447,13 @@ def catalogue(request):
 @app.route("/search/", distill_file="search/index.html")
 def dataset_search(request):
     """Render the static shell for browser-side CSW dataset search."""
+    config = shared_template_context()
     datasets = catalogue_datasets()
     return app.render(
         request,
         "search.html",
         context={
-            "site_title": "NINA Public Catalog",
+            **config,
             "title": "Search datasets",
             "detail_urls": {
                 dataset["identifier"]: f"/datasets/{dataset['slug']}/"
@@ -445,11 +473,12 @@ def dataset_detail(request, slug):
     if dataset is None:
         raise Http404("Dataset not found")
 
+    config = shared_template_context()
     return app.render(
         request,
         "dataset.html",
         context={
-            "site_title": "NINA Public Catalog",
+            **config,
             "title": dataset["title"],
             "dataset": dataset,
         },

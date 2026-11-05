@@ -13,7 +13,7 @@ uv run prek install # optional
 
 
 ### Run
-Start the app with Pixi so the local stylesheet is generated first:
+Start the app with Pixi so CSS is generated and static files are collected first:
 ```bash
 pixi run -e dev start
 ```
@@ -21,6 +21,7 @@ pixi run -e dev start
 For direct uv execution, generate the stylesheet first:
 ```bash
 pixi run -e dev build-css
+uv run python main.py manage collectstatic --noinput
 uv run main.py
 ```
 
@@ -39,7 +40,7 @@ pixi run -e dev start
 To rebuild CSS while editing, run `pixi run -e dev watch-css` in a second terminal.
 
 ### Build the static site
-The catalogue index and one metadata page per dataset are generated from the live NINA CSW endpoint. The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated:
+The catalogue index and one metadata page per dataset are generated from the configured CSW endpoint (`catalogue.csw_url` in `templates/site.yml`). The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated:
 
 ```bash
 pixi run -e dev build-static
@@ -47,13 +48,13 @@ pixi run -e dev build-static
 
 The generated site is written to `output/`; each build recreates that generated directory.
 
-The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query NINA CSW directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
+The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query the configured endpoint directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
 
-The NINA CSW endpoint must allow CORS from the deployed site origin for GET and POST requests, including OPTIONS preflight and the XML POST content type. Without that endpoint configuration, search displays a connection error and offers retry; the static catalogue pages remain available.
+The configured CSW endpoint must allow CORS from the deployed site origin for GET and POST requests, including OPTIONS preflight and the XML POST content type. Without that endpoint configuration, search displays a connection error and offers retry; the static catalogue pages remain available.
 
 ### Pixi (optional)
 Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge. Bun installs DaisyUI and Tailwind CSS from `package.json`.
-Edit `assets/css/app.css` to change the DaisyUI `nina` palette, and `templates/base.html` to change the shared page layout.
+Edit `assets/css/app.css` to change the DaisyUI `nina` palette, `templates/base.html` to change the shared page layout, and `templates/site.yml` to configure the site metadata, CSW endpoint, and footer contact information.
 
 ```bash
 pixi install -e dev

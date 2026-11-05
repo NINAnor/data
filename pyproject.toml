@@ -20,7 +20,7 @@ dependencies = [
   "django-environ",
   "nanodjango>=0.17.1",
   "owslib>=0.35.0",
-  "pygeometa>=0.19.0",
+  "pygeometa>=0.19.0"
 ]
 description = ""
 license = "GPL-3.0+"

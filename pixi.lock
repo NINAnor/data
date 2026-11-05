@@ -288,7 +288,7 @@ packages:
 - pypi: ./
   name: datasets
   version: 0.1.0
-  sha256: f237b3864cd7118757bc628001af792751dee9ef8973624b733c6b67a55b5b88
+  sha256: 2996e820602191be67f09633d062021a4befcf79eedfcd71870dfb961b284e2b
   requires_dist:
   - django>=5.2
   - django-distill>=4.0.6

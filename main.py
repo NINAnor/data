@@ -153,7 +153,9 @@ def metadata_sections(metadata, extent=None):
         for key, value in identification.items()
         if key not in {"title", "abstract", "keywords", "extents"}
     }
-    temporal_extent = extent_values.get("temporal") if isinstance(extent_values, dict) else None
+    temporal_extent = (
+        extent_values.get("temporal") if isinstance(extent_values, dict) else None
+    )
     if temporal_extent:
         dataset_values["temporal_extent"] = temporal_extent
 
@@ -167,7 +169,15 @@ def metadata_sections(metadata, extent=None):
     additional = {
         key: value
         for key, value in metadata.items()
-        if key not in {"mcf", "metadata", "spatial", "identification", "contact", "distribution"}
+        if key
+        not in {
+            "mcf",
+            "metadata",
+            "spatial",
+            "identification",
+            "contact",
+            "distribution",
+        }
     }
     additional_fields = flatten_metadata(additional)
     if additional_fields:
@@ -267,7 +277,9 @@ def contact_cards(contacts):
         hours = primary_text(details.get("hoursofservice"))
         instructions = primary_text(details.get("contactinstructions"))
 
-        if not any((name, organization, position, methods, address, hours, instructions)):
+        if not any(
+            (name, organization, position, methods, address, hours, instructions)
+        ):
             continue
 
         role_label = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", str(role))
@@ -308,7 +320,9 @@ def keyword_tags(identification):
 def primary_text(value):
     """Choose a readable string from pygeometa's scalar or multilingual values."""
     if isinstance(value, dict):
-        return next((text for item in value.values() if (text := primary_text(item))), "")
+        return next(
+            (text for item in value.values() if (text := primary_text(item))), ""
+        )
     if isinstance(value, (list, tuple)):
         return next((text for item in value if (text := primary_text(item))), "")
     return "" if value is None else str(value)
@@ -328,10 +342,7 @@ def spatial_extent(identification):
             west, south, east, north = (float(value) for value in bbox)
         except (TypeError, ValueError):
             continue
-        if (
-            -180 <= west < east <= 180
-            and -90 <= south < north <= 90
-        ):
+        if -180 <= west < east <= 180 and -90 <= south < north <= 90:
             return {
                 "west": west,
                 "south": south,

@@ -1,9 +1,82 @@
 const PYODIDE_VERSION = "0.29.5";
+const OWSLIB_VERSION = "0.36.0";
 const PAGE_SIZE = 10;
 const PYODIDE_BASE = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
+const PACKAGE_CACHE_ROOT = "/nina-datasets-search-packages";
+const PACKAGE_CACHE_PATH = `${PACKAGE_CACHE_ROOT}/pyodide-${PYODIDE_VERSION}-owslib-${OWSLIB_VERSION}`;
+const PACKAGE_CACHE_MANIFEST = `pyodide-${PYODIDE_VERSION};OWSLib==${OWSLIB_VERSION}`;
 
 let pyodide;
 let initialization;
+let searchQueue = Promise.resolve();
+let latestRequestId;
+let packageCacheMounted = false;
+
+const PYTHON_PACKAGE_SETUP = String.raw`
+import importlib
+import shutil
+import sys
+import sysconfig
+from pathlib import Path
+
+cache_path = Path(_package_cache_path) if _package_cache_path else None
+cache_manifest = _package_cache_manifest
+marker = cache_path / ".manifest" if cache_path else None
+cache_hit = False
+
+
+def clear_cache_directory(path):
+    try:
+        if not path.exists():
+            return True
+        for child in path.iterdir():
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+    except Exception:
+        return False
+    return True
+
+
+if cache_path and marker and marker.is_file():
+    try:
+        cache_hit = marker.read_text(encoding="utf-8") == cache_manifest
+        if cache_hit:
+            sys.path.insert(0, str(cache_path))
+            from owslib.csw import CatalogueServiceWeb  # noqa: F401
+            from owslib.fes import And, BBox  # noqa: F401
+    except Exception:
+        cache_hit = False
+        if str(cache_path) in sys.path:
+            sys.path.remove(str(cache_path))
+        clear_cache_directory(cache_path)
+
+if not cache_hit:
+    import micropip
+
+    await micropip.install(f"OWSLib=={_owslib_version}")
+    from owslib.csw import CatalogueServiceWeb  # noqa: F401
+    from owslib.fes import And, BBox  # noqa: F401
+
+    if cache_path and clear_cache_directory(cache_path):
+        try:
+            cache_path.mkdir(parents=True, exist_ok=True)
+            site_packages = Path(sysconfig.get_paths()["purelib"])
+            for package in site_packages.iterdir():
+                target = cache_path / package.name
+                if package.is_dir():
+                    shutil.copytree(package, target, dirs_exist_ok=True)
+                elif package.is_file():
+                    shutil.copy2(package, target)
+            marker.write_text(cache_manifest, encoding="utf-8")
+            sys.path.insert(0, str(cache_path))
+            importlib.invalidate_caches()
+        except Exception:
+            clear_cache_directory(cache_path)
+
+cache_hit
+`;
 
 const PYTHON_SEARCH = String.raw`
 import json
@@ -148,12 +221,29 @@ async function initialize(cswUrl) {
     importScripts(`${PYODIDE_BASE}pyodide.js`);
     pyodide = await loadPyodide({ indexURL: PYODIDE_BASE });
 
-    self.postMessage({ type: "status", message: "Installing OWSLib…" });
+    self.postMessage({ type: "status", message: "Checking the browser package cache…" });
     await pyodide.loadPackage("micropip");
-    await pyodide.runPythonAsync(`
-import micropip
-await micropip.install("OWSLib==0.36.0")
-`);
+    const packageCacheAvailable = await mountPackageCache();
+    pyodide.globals.set(
+      "_package_cache_path",
+      packageCacheAvailable ? PACKAGE_CACHE_PATH : "",
+    );
+    pyodide.globals.set("_package_cache_manifest", PACKAGE_CACHE_MANIFEST);
+    pyodide.globals.set("_owslib_version", OWSLIB_VERSION);
+
+    const hasCachedPackage = packageCacheAvailable && packageCacheManifestMatches();
+    self.postMessage({
+      type: "status",
+      message: hasCachedPackage ? "Loading cached OWSLib…" : "Installing OWSLib…",
+    });
+    const cacheHit = await pyodide.runPythonAsync(PYTHON_PACKAGE_SETUP);
+    if (packageCacheAvailable && !cacheHit) {
+      try {
+        await syncPackageCache(false);
+      } catch (error) {
+        console.warn("Could not persist the browser package cache", error);
+      }
+    }
     await pyodide.runPythonAsync(PYTHON_SEARCH);
 
     self.postMessage({ type: "status", message: "Connecting to catalogue…" });
@@ -171,6 +261,70 @@ await micropip.install("OWSLib==0.36.0")
   }
 }
 
+async function mountPackageCache() {
+  try {
+    const fileSystem = pyodide.FS;
+    if (!fileSystem.filesystems?.IDBFS) return false;
+    if (!packageCacheMounted) {
+      fileSystem.mkdirTree(PACKAGE_CACHE_ROOT);
+      fileSystem.mount(fileSystem.filesystems.IDBFS, {}, PACKAGE_CACHE_ROOT);
+      packageCacheMounted = true;
+    }
+    await syncPackageCache(true);
+    return true;
+  } catch (error) {
+    console.warn("IndexedDB package cache unavailable; using network packages", error);
+    return false;
+  }
+}
+
+function syncPackageCache(populate) {
+  return new Promise((resolve, reject) => {
+    pyodide.FS.syncfs(populate, (error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
+
+function packageCacheManifestMatches() {
+  try {
+    return (
+      pyodide.FS.readFile(`${PACKAGE_CACHE_PATH}/.manifest`, { encoding: "utf8" }) ===
+      PACKAGE_CACHE_MANIFEST
+    );
+  } catch {
+    return false;
+  }
+}
+
+function enqueueSearch(data) {
+  latestRequestId = data.requestId;
+  searchQueue = searchQueue.then(async () => {
+    if (data.requestId !== latestRequestId) return;
+
+    try {
+      if (!pyodide) throw new Error("Search service is not ready.");
+      pyodide.globals.set("_search_payload_json", JSON.stringify(data.payload));
+      const result = await pyodide.runPythonAsync("search_json(_search_payload_json)");
+      if (data.requestId !== latestRequestId) return;
+      self.postMessage({
+        type: "results",
+        requestId: data.requestId,
+        result: JSON.parse(String(result)),
+      });
+    } catch (error) {
+      if (data.requestId !== latestRequestId) return;
+      self.postMessage({
+        type: "error",
+        stage: "search",
+        requestId: data.requestId,
+        message: String(error?.message || error),
+      });
+    }
+  });
+}
+
 self.addEventListener("message", async ({ data }) => {
   if (data?.type === "init") {
     try {
@@ -186,22 +340,11 @@ self.addEventListener("message", async ({ data }) => {
   }
 
   if (data?.type === "search") {
-    try {
-      if (!pyodide) throw new Error("Search service is not ready.");
-      pyodide.globals.set("_search_payload_json", JSON.stringify(data.payload));
-      const result = await pyodide.runPythonAsync("search_json(_search_payload_json)");
-      self.postMessage({
-        type: "results",
-        requestId: data.requestId,
-        result: JSON.parse(String(result)),
-      });
-    } catch (error) {
-      self.postMessage({
-        type: "error",
-        stage: "search",
-        requestId: data.requestId,
-        message: String(error?.message || error),
-      });
-    }
+    enqueueSearch(data);
+    return;
+  }
+
+  if (data?.type === "cancel") {
+    latestRequestId = undefined;
   }
 });

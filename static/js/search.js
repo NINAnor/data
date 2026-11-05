@@ -241,7 +241,7 @@ function runSearch(state, { updateUrl: shouldUpdateUrl = true } = {}) {
   if (shouldUpdateUrl) updateUrl(activeState);
 
   requestId += 1;
-  searchButton.disabled = false;
+  searchButton.disabled = true;
   retryButton.hidden = true;
   setStatus("Searching the configured catalogue…");
   worker.postMessage({ type: "search", requestId, payload: activeState });
@@ -266,6 +266,7 @@ function renderResults(result) {
   }
 
   resultsCount.hidden = false;
+  searchButton.disabled = false;
   resultsCount.textContent = `${matches} dataset${matches === 1 ? "" : "s"} found`;
   resultsList.replaceChildren();
 
@@ -509,11 +510,14 @@ areaDetails.addEventListener("toggle", () => {
 });
 
 clearFiltersButton.addEventListener("click", () => {
+  requestId += 1;
+  worker?.postMessage({ type: "cancel" });
   form.reset();
   selectedBounds = null;
   firstCorner = null;
   drawMode = false;
   activeState = null;
+  searchButton.disabled = !workerReady;
   if (map) {
     map.getCanvas().style.cursor = "";
     syncMapArea();
@@ -551,7 +555,10 @@ window.addEventListener("popstate", () => {
   if (state.submitted) {
     runSearch(state, { updateUrl: false });
   } else {
+    requestId += 1;
+    worker?.postMessage({ type: "cancel" });
     activeState = null;
+    searchButton.disabled = !workerReady;
     resultsCount.hidden = true;
     resultsList.replaceChildren();
     pagination.hidden = true;

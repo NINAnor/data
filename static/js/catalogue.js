@@ -4,6 +4,11 @@ const datasetCount = document.querySelector("#dataset-count");
 const loadStatus = document.querySelector("#dataset-load-status");
 const loadMoreButton = document.querySelector("#load-more-datasets");
 const cardTemplate = document.querySelector("#dataset-card-template");
+const ui = JSON.parse(document.querySelector("#ui-strings").textContent);
+
+function format(message, values = {}) {
+  return message.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+}
 
 const total = Number.parseInt(catalogue.dataset.total, 10);
 let loaded = Number.parseInt(catalogue.dataset.loaded, 10);
@@ -21,7 +26,7 @@ function createDatasetCard(dataset) {
     const preview = document.createElement("img");
     preview.className = "absolute inset-0 h-full max-h-24 w-full object-cover";
     preview.src = dataset.preview;
-    preview.alt = `Preview of ${dataset.title}`;
+    preview.alt = format(ui.preview_of, { title: dataset.title });
     preview.loading = "lazy";
     preview.decoding = "async";
     preview.dataset.datasetPreview = "";
@@ -32,7 +37,7 @@ function createDatasetCard(dataset) {
   tags.replaceChildren();
   for (const tag of dataset.keyword_tags) {
     const link = document.createElement("a");
-    link.className = "badge badge-secondary badge-outline";
+    link.className = "badge badge-secondary badge-outline max-w-full h-auto min-h-6 whitespace-normal wrap-anywhere";
     link.textContent = tag;
     const searchUrl = new URL("search/", document.baseURI);
     searchUrl.searchParams.set("submitted", "1");
@@ -51,7 +56,7 @@ loadMoreButton.addEventListener("click", async () => {
   const requestedPage = nextPage;
   loadMoreButton.disabled = true;
   loadMoreButton.setAttribute("aria-busy", "true");
-  loadMoreButton.textContent = "Loading…";
+  loadMoreButton.textContent = ui.loading;
   loadStatus.hidden = true;
 
   try {
@@ -73,15 +78,15 @@ loadMoreButton.addEventListener("click", async () => {
     datasetList.append(cards);
 
     loaded += payload.datasets.length;
-    datasetCount.textContent = `Showing ${loaded} of ${total} datasets`;
+    datasetCount.textContent = format(ui.showing_datasets, { loaded, total });
     nextPage = payload.next_page;
     loadMoreButton.hidden = !nextPage;
-    loadMoreButton.textContent = "Load more";
+    loadMoreButton.textContent = ui.load_more;
   } catch (error) {
     console.error("Could not load more datasets", error);
-    loadStatus.textContent = "Could not load more datasets. Please retry.";
+    loadStatus.textContent = ui.load_error;
     loadStatus.hidden = false;
-    loadMoreButton.textContent = "Retry";
+    loadMoreButton.textContent = ui.retry;
   } finally {
     loadMoreButton.disabled = false;
     loadMoreButton.removeAttribute("aria-busy");

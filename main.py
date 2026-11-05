@@ -4,6 +4,7 @@ import hashlib
 import logging
 import pathlib
 import re
+from copy import deepcopy
 from datetime import datetime, timezone
 from functools import cache
 from urllib.parse import urlsplit
@@ -32,6 +33,234 @@ CSW_TYPE_NAMES = "gmd:MD_Metadata"
 CSW_OUTPUT_SCHEMA = "http://www.isotc211.org/2005/gmd"
 SITE_CONFIG_PATH = BASE_DIR / "templates" / "site.yml"
 
+UI_STRINGS = {
+    "en": {
+        "language": "English",
+        "switch_language": "Norsk",
+        "language_selector": "Language",
+        "catalogue_title": "NINA Public Catalog",
+        "search_page_title": "Search datasets",
+        "site_description": (
+            "Search and explore datasets from the Norwegian Institute "
+            "for Nature Research."
+        ),
+        "main_navigation": "Main navigation",
+        "home": "home",
+        "explore_datasets": "Explore datasets",
+        "footer_navigation": "Footer navigation",
+        "explore": "Explore",
+        "find_datasets": "Find datasets",
+        "search_description": (
+            "Search dataset titles, abstracts, and metadata across the catalogue."
+        ),
+        "search_all_metadata": "Search all dataset metadata",
+        "search_datasets_placeholder": "Search datasets…",
+        "search": "Search",
+        "no_records": "No catalogue records found.",
+        "showing_datasets": "Showing {loaded} of {total} datasets",
+        "load_more": "Load more",
+        "loading": "Loading…",
+        "enable_javascript": "Enable JavaScript to load the remaining datasets.",
+        "load_error": "Could not load more datasets. Please retry.",
+        "retry": "Retry",
+        "preview_of": "Preview of {title}",
+        "dataset_tags": "Dataset tags",
+        "back_to_catalogue": "Back to catalogue",
+        "dataset": "Dataset",
+        "identifier": "Identifier",
+        "keywords": "Keywords",
+        "spatial_extent": "Spatial extent",
+        "map_extent": "Map showing the spatial extent of {title}",
+        "contacts": "Contacts",
+        "contact_instructions": "Contact instructions",
+        "hours_of_service": "Hours of service",
+        "access_downloads": "Access and downloads",
+        "protocol": "Protocol",
+        "relation": "Relation",
+        "format": "Format",
+        "format_version": "Format version",
+        "channel": "Channel",
+        "search_noscript": (
+            "Dataset search requires JavaScript to query the configured catalogue."
+        ),
+        "search_intro": (
+            "Search the configured CSW catalogue by metadata text, keywords, area, "
+            "or metadata update date."
+        ),
+        "search_text": "Search text",
+        "query_placeholder": "Title, abstract, or metadata",
+        "find_keyword": "Find a keyword",
+        "filter_keywords": "Filter keyword list",
+        "loading_keywords": "Loading keywords…",
+        "all_keywords": "Records must match every selected keyword.",
+        "metadata_updated": "Metadata updated",
+        "from": "From",
+        "to": "To",
+        "area": "Area",
+        "draw_instructions": (
+            "Open the map, select Draw rectangle, then choose two opposite corners."
+        ),
+        "map_for_search": "Map for drawing a search rectangle",
+        "draw_rectangle": "Draw rectangle",
+        "clear_area": "Clear area",
+        "no_area": "No area selected.",
+        "clear": "Clear",
+        "results": "Results",
+        "loading_search": "Loading the search service…",
+        "retry_connection": "Retry connection",
+        "previous": "Previous",
+        "next": "Next",
+        "search_ready": (
+            "Search is ready. Set filters and select Search to browse the catalogue."
+        ),
+        "search_unavailable": "Search service is unavailable. Retry the connection.",
+        "connect_error": (
+            "Could not connect to the configured catalogue. Check the connection "
+            "and CORS configuration, then retry."
+        ),
+        "search_error": (
+            "Search failed. Your filters are unchanged. Check the connection and "
+            "CORS configuration, then retry."
+        ),
+        "starting_search": "Starting the browser search service…",
+        "loading_python": "Loading browser Python runtime…",
+        "installing_owslib": "Installing OWSLib…",
+        "connecting_catalogue": "Connecting to catalogue…",
+        "no_keyword_options": "No keyword options are available.",
+        "date_order_error": "The start date must be on or before the end date.",
+        "searching": "Searching the configured catalogue…",
+        "found_datasets": "{count} datasets found",
+        "found_dataset": "1 dataset found",
+        "no_match": (
+            "No datasets match these filters. Try changing or clearing a filter."
+        ),
+        "page_of": "Page {page} of {total}",
+        "no_pages": "No pages",
+        "search_complete": "Search complete.",
+        "updated_date": "Metadata updated: {date}",
+        "selected_rectangle": (
+            "Rectangle selected ({west}, {south} to {east}, {north})."
+        ),
+        "first_corner": "First corner selected. Choose the opposite corner.",
+        "choose_corners": "Choose the first corner, then the opposite corner.",
+        "distinct_corners": "Choose two distinct corners to make a rectangle.",
+        "map_error": "The map could not be loaded. Try again later.",
+    },
+    "no": {
+        "language": "Norsk bokmål",
+        "switch_language": "English",
+        "language_selector": "Språk",
+        "catalogue_title": "NINAs offentlige katalog",
+        "search_page_title": "Søk i datasett",
+        "site_description": (
+            "Søk i og utforsk datasett fra Norsk institutt for naturforskning."
+        ),
+        "main_navigation": "Hovedmeny",
+        "home": "hjem",
+        "explore_datasets": "Utforsk datasett",
+        "footer_navigation": "Bunnmeny",
+        "explore": "Utforsk",
+        "find_datasets": "Finn datasett",
+        "search_description": (
+            "Søk i titler, sammendrag og metadata for datasett i katalogen."
+        ),
+        "search_all_metadata": "Søk i alle metadata for datasett",
+        "search_datasets_placeholder": "Søk i datasett …",
+        "search": "Søk",
+        "no_records": "Fant ingen katalogoppføringer.",
+        "showing_datasets": "Viser {loaded} av {total} datasett",
+        "load_more": "Last inn flere",
+        "loading": "Laster …",
+        "enable_javascript": "Slå på JavaScript for å laste inn resten av datasettene.",
+        "load_error": "Kunne ikke laste inn flere datasett. Prøv igjen.",
+        "retry": "Prøv igjen",
+        "preview_of": "Forhåndsvisning av {title}",
+        "dataset_tags": "Datasett-emneord",
+        "back_to_catalogue": "Tilbake til katalogen",
+        "dataset": "Datasett",
+        "identifier": "Identifikator",
+        "keywords": "Emneord",
+        "spatial_extent": "Geografisk utbredelse",
+        "map_extent": "Kart som viser den geografiske utbredelsen til {title}",
+        "contacts": "Kontaktpersoner",
+        "contact_instructions": "Kontaktinstruksjoner",
+        "hours_of_service": "Åpningstider",
+        "access_downloads": "Tilgang og nedlasting",
+        "protocol": "Protokoll",
+        "relation": "Relasjon",
+        "format": "Format",
+        "format_version": "Formatversjon",
+        "channel": "Kanal",
+        "search_noscript": (
+            "Datasettsøk krever JavaScript for å søke i den konfigurerte katalogen."
+        ),
+        "search_intro": (
+            "Søk i den konfigurerte CSW-katalogen etter metadata, emneord, "
+            "område eller dato for metadataoppdatering."
+        ),
+        "search_text": "Søketekst",
+        "query_placeholder": "Tittel, sammendrag eller metadata",
+        "find_keyword": "Finn et emneord",
+        "filter_keywords": "Filtrer listen over emneord",
+        "loading_keywords": "Laster emneord …",
+        "all_keywords": "Oppføringer må samsvare med alle valgte emneord.",
+        "metadata_updated": "Metadata oppdatert",
+        "from": "Fra",
+        "to": "Til",
+        "area": "Område",
+        "draw_instructions": (
+            "Åpne kartet, velg Tegn rektangel, og velg deretter to motsatte hjørner."
+        ),
+        "map_for_search": "Kart for å tegne et søkeområde",
+        "draw_rectangle": "Tegn rektangel",
+        "clear_area": "Fjern område",
+        "no_area": "Ingen område valgt.",
+        "clear": "Tøm",
+        "results": "Resultater",
+        "loading_search": "Laster søketjenesten …",
+        "retry_connection": "Prøv tilkoblingen på nytt",
+        "previous": "Forrige",
+        "next": "Neste",
+        "search_ready": (
+            "Søket er klart. Velg filtre og trykk Søk for å bla i katalogen."
+        ),
+        "search_unavailable": (
+            "Søketjenesten er utilgjengelig. Prøv tilkoblingen på nytt."
+        ),
+        "connect_error": (
+            "Kunne ikke koble til den konfigurerte katalogen. Kontroller "
+            "tilkoblingen og CORS-oppsettet, og prøv igjen."
+        ),
+        "search_error": (
+            "Søket mislyktes. Filtrene er uendret. Kontroller tilkoblingen og "
+            "CORS-oppsettet, og prøv igjen."
+        ),
+        "starting_search": "Starter søketjenesten i nettleseren …",
+        "loading_python": "Laster Python-miljøet i nettleseren …",
+        "installing_owslib": "Installerer OWSLib …",
+        "connecting_catalogue": "Kobler til katalogen …",
+        "no_keyword_options": "Ingen emneord er tilgjengelige.",
+        "date_order_error": "Startdatoen må være før eller lik sluttdatoen.",
+        "searching": "Søker i den konfigurerte katalogen …",
+        "found_datasets": "{count} datasett funnet",
+        "found_dataset": "Ett datasett funnet",
+        "no_match": (
+            "Ingen datasett samsvarer med filtrene. Endre eller fjern et filter."
+        ),
+        "page_of": "Side {page} av {total}",
+        "no_pages": "Ingen sider",
+        "search_complete": "Søket er fullført.",
+        "updated_date": "Metadata oppdatert: {date}",
+        "selected_rectangle": (
+            "Rektangel valgt ({west}, {south} til {east}, {north})."
+        ),
+        "first_corner": "Første hjørne valgt. Velg det motsatte hjørnet.",
+        "choose_corners": "Velg først det ene hjørnet, deretter det motsatte.",
+        "distinct_corners": "Velg to forskjellige hjørner for å lage et rektangel.",
+        "map_error": "Kartet kunne ikke lastes inn. Prøv igjen senere.",
+    },
+}
+
 
 def load_site_config(path=SITE_CONFIG_PATH):
     """Load site branding and footer content from the YAML configuration."""
@@ -54,9 +283,108 @@ def site_config():
     return load_site_config()
 
 
-def shared_template_context():
-    """Return site-wide settings shared by every page template."""
-    return site_config()
+def shared_template_context(language="en", language_switch_url="/no/"):
+    """Return shared site settings and interface strings for one language."""
+    config = site_config()
+    footer = {**config["footer"]}
+    if language == "no":
+        if footer["organization"] == "Norwegian Institute for Nature Research (NINA)":
+            footer["organization"] = "Norsk institutt for naturforskning (NINA)"
+        footer["links"] = [
+            {
+                **link,
+                "label": "Kontakt NINA"
+                if link["label"] == "Contact NINA"
+                else link["label"],
+            }
+            for link in footer["links"]
+        ]
+    site = {**config["site"], "language": "nb" if language == "no" else "en"}
+    if language == "no":
+        if site["title"] == "NINA Public Catalog":
+            site["title"] = UI_STRINGS[language]["catalogue_title"]
+        if site["description"] == (
+            "Search and explore datasets from the Norwegian Institute "
+            "for Nature Research."
+        ):
+            site["description"] = UI_STRINGS[language]["site_description"]
+    return {
+        **config,
+        "site": site,
+        "footer": footer,
+        "ui": UI_STRINGS[language],
+        "language": language,
+        "language_switch_url": language_switch_url,
+    }
+
+
+def localized_dataset(dataset, language):
+    """Translate interface labels without changing catalogue-supplied values."""
+    result = deepcopy(dataset)
+    result["preview_alt"] = UI_STRINGS[language]["preview_of"].format(
+        title=result["title"]
+    )
+    result["map_label"] = UI_STRINGS[language]["map_extent"].format(
+        title=result["title"]
+    )
+    if language == "en":
+        return result
+
+    labels = {
+        "Record details": "Postdetaljer",
+        "Spatial information": "Romlig informasjon",
+        "Dataset information": "Datasettinformasjon",
+        "Additional metadata": "Øvrige metadata",
+        "Hierarchy level": "Hierarkinivå",
+        "Character set": "Tegnsett",
+        "Dataset URI": "Datasett-URI",
+        "Data type": "Datatype",
+        "Geometry type": "Geometritype",
+        "Scale denominator": "Målestokktall",
+        "Resolution": "Oppløsning",
+        "Creation date": "Opprettelsesdato",
+        "Publication date": "Publiseringsdato",
+        "Revision date": "Revisjonsdato",
+        "Maintenance frequency": "Oppdateringsfrekvens",
+        "Topic category": "Temakategori",
+        "Access constraints": "Tilgangsbegrensninger",
+        "Format version": "Formatversjon",
+        "Top-left coordinate (longitude, latitude)": (
+            "Øvre venstre koordinat (lengdegrad, breddegrad)"
+        ),
+        "Bottom-right coordinate (longitude, latitude)": (
+            "Nedre høyre koordinat (lengdegrad, breddegrad)"
+        ),
+        "Download": "Last ned",
+        "View information": "Vis informasjon",
+        "Access details": "Tilgangsdetaljer",
+        "Order resource": "Bestill ressurs",
+        "Open service": "Åpne tjeneste",
+        "Open resource": "Åpne ressurs",
+        "Email": "E-post",
+        "Phone": "Telefon",
+        "Fax": "Faks",
+        "Website": "Nettsted",
+        "Street address": "Gateadresse",
+        "City": "Poststed",
+        "Region": "Region",
+        "Postal code": "Postnummer",
+        "Country": "Land",
+    }
+    for section in result["metadata_sections"]:
+        section["title"] = labels.get(section["title"], section["title"])
+        for field in section["fields"]:
+            field["label"] = " · ".join(
+                labels.get(part, part) for part in field["label"].split(" · ")
+            )
+    for contact in result["contacts"]:
+        for method in contact["methods"]:
+            method["label"] = labels.get(method["label"], method["label"])
+        for item in contact["address"]:
+            item["label"] = labels.get(item["label"], item["label"])
+    for resource in result["resources"]:
+        resource["action"] = labels.get(resource["action"], resource["action"])
+    return result
 
 
 def fetch_all_records(csw, page_size=CSW_PAGE_SIZE):
@@ -158,8 +486,8 @@ def flatten_metadata(value, path=""):
         for key, child in value.items():
             child_path = f"{path}.{key}" if path else str(key)
             fields.extend(flatten_metadata(child, child_path))
-    elif isinstance(value, (list, tuple)):
-        if all(not isinstance(child, (dict, list, tuple)) for child in value):
+    elif isinstance(value, list | tuple):
+        if all(not isinstance(child, dict | list | tuple) for child in value):
             fields.extend(flatten_metadata(", ".join(map(str, value)), path))
         else:
             for index, child in enumerate(value, start=1):
@@ -383,7 +711,7 @@ def primary_text(value):
         return next(
             (text for item in value.values() if (text := primary_text(item))), ""
         )
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list | tuple):
         return next((text for item in value if (text := primary_text(item))), "")
     return "" if value is None else str(value)
 
@@ -406,7 +734,7 @@ def spatial_extent(identification):
 
     for extent in extents:
         bbox = extent.get("bbox") if isinstance(extent, dict) else None
-        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+        if not isinstance(bbox, list | tuple) or len(bbox) != 4:
             continue
         try:
             west, south, east, north = (float(value) for value in bbox)
@@ -504,23 +832,37 @@ def dataset_pages():
 @app.route("/", distill_file="index.html")
 def catalogue(request):
     """Render the catalogue index with links to every dataset page."""
-    config = shared_template_context()
-    datasets = catalogue_datasets()
+    return render_catalogue(request, "en", "/no/")
+
+
+@app.route("/no/", distill_file="no/index.html")
+def catalogue_norwegian(request):
+    """Render the Norwegian catalogue index."""
+    return render_catalogue(request, "no", "/")
+
+
+def render_catalogue(request, language, language_switch_url):
+    config = shared_template_context(language, language_switch_url)
+    datasets = [localized_dataset(item, language) for item in catalogue_datasets()]
     return app.render(
         request,
         "index.html",
         context={
             **config,
-            "title": config["site"]["title"],
+            "title": config["ui"]["catalogue_title"],
             "datasets": datasets[:CATALOGUE_PAGE_SIZE],
             "dataset_total": len(datasets),
             "dataset_initial_count": min(len(datasets), CATALOGUE_PAGE_SIZE),
+            "dataset_count_text": config["ui"]["showing_datasets"].format(
+                loaded=min(len(datasets), CATALOGUE_PAGE_SIZE), total=len(datasets)
+            ),
             "dataset_next_page": 2 if len(datasets) > CATALOGUE_PAGE_SIZE else "",
             "empty_dataset": {
                 "identifier": "",
                 "slug": "",
                 "title": "",
                 "preview": "",
+                "preview_alt": "",
                 "keyword_tags": [],
             },
         },
@@ -533,19 +875,39 @@ def dataset_chunk(request, page):
     return JsonResponse(dataset_page_payload(page))
 
 
+@app.route("/no/data/datasets/<int:page>.json", distill_func=dataset_chunk_pages)
+def dataset_chunk_norwegian(request, page):
+    """Return one static JSON page of catalogue cards for the Norwegian site."""
+    return JsonResponse(dataset_page_payload(page))
+
+
 @app.route("/search/", distill_file="search/index.html")
 def dataset_search(request):
     """Render the static shell for browser-side CSW dataset search."""
-    config = shared_template_context()
+    return render_dataset_search(request, "en", "/search/")
+
+
+@app.route("/no/search/", distill_file="no/search/index.html")
+def dataset_search_norwegian(request):
+    """Render the Norwegian static shell for browser-side CSW search."""
+    return render_dataset_search(request, "no", "/search/")
+
+
+def render_dataset_search(request, language, language_switch_url):
+    config = shared_template_context(language, language_switch_url)
     datasets = catalogue_datasets()
     return app.render(
         request,
         "search.html",
         context={
             **config,
-            "title": "Search datasets",
+            "title": config["ui"]["search_page_title"],
             "detail_urls": {
-                dataset["identifier"]: f"/datasets/{dataset['slug']}/"
+                dataset["identifier"]: (
+                    f"/{language}/datasets/{dataset['slug']}/"
+                    if language == "no"
+                    else f"/datasets/{dataset['slug']}/"
+                )
                 for dataset in datasets
             },
         },
@@ -555,6 +917,19 @@ def dataset_search(request):
 @app.route("/datasets/<slug:slug>/", distill_func=dataset_pages)
 def dataset_detail(request, slug):
     """Render one dataset's ISO metadata."""
+    return render_dataset_detail(request, slug, "en", f"/no/datasets/{slug}/")
+
+
+@app.route(
+    "/no/datasets/<slug:slug>/",
+    distill_func=dataset_pages,
+)
+def dataset_detail_norwegian(request, slug):
+    """Render one dataset's ISO metadata in the Norwegian interface."""
+    return render_dataset_detail(request, slug, "no", f"/datasets/{slug}/")
+
+
+def render_dataset_detail(request, slug, language, language_switch_url):
     dataset = next(
         (item for item in catalogue_datasets() if item["slug"] == slug),
         None,
@@ -562,14 +937,14 @@ def dataset_detail(request, slug):
     if dataset is None:
         raise Http404("Dataset not found")
 
-    config = shared_template_context()
+    config = shared_template_context(language, language_switch_url)
     return app.render(
         request,
         "dataset.html",
         context={
             **config,
             "title": dataset["title"],
-            "dataset": dataset,
+            "dataset": localized_dataset(dataset, language),
         },
     )
 

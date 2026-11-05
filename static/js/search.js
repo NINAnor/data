@@ -20,6 +20,11 @@ const nextButton = document.querySelector("#next-page");
 const pageStatus = document.querySelector("#page-status");
 const detailUrls = JSON.parse(document.querySelector("#dataset-detail-urls").textContent);
 const cswUrl = JSON.parse(document.querySelector("#csw-endpoint").textContent);
+const ui = JSON.parse(document.querySelector("#ui-strings").textContent);
+
+function format(message, values = {}) {
+  return message.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+}
 
 const PAGE_SIZE = 10;
 const MAPLIBRE_URL = "https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.mjs";
@@ -55,8 +60,8 @@ function setFailure(stage, message) {
   retryButton.hidden = false;
   setStatus(
     stage === "init"
-       ? "Could not connect to the configured catalogue. Check the connection and CORS configuration, then retry."
-       : "Search failed. Your filters are unchanged. Check the connection and CORS configuration, then retry.",
+      ? ui.connect_error
+      : ui.search_error,
     "error"
   );
 }
@@ -66,7 +71,7 @@ function startWorker() {
   workerReady = false;
   searchButton.disabled = true;
   retryButton.hidden = true;
-  setStatus("Starting the browser search service…");
+  setStatus(ui.starting_search);
 
   worker = new Worker(new URL("./search-worker.js", import.meta.url));
   worker.addEventListener("message", handleWorkerMessage);
@@ -78,7 +83,7 @@ function startWorker() {
 
 function handleWorkerMessage({ data }) {
   if (data.type === "status") {
-    setStatus(data.message);
+    setStatus(data.message || ui[data.key] || "");
     return;
   }
 
@@ -95,7 +100,7 @@ function handleWorkerMessage({ data }) {
     if (state.submitted) {
       runSearch(state, { updateUrl: false });
     } else {
-      setStatus("Search is ready. Set filters and select Search to browse the catalogue.");
+      setStatus(ui.search_ready);
     }
     return;
   }
@@ -145,7 +150,7 @@ function restoreForm(state) {
     updateAreaStatus();
     ensureMap().then(syncMapArea).catch((error) => {
       console.error("Could not load area map", error);
-      areaStatus.textContent = "The map could not be loaded. Try again later.";
+      areaStatus.textContent = ui.map_error;
     });
   } else {
     updateAreaStatus();
@@ -158,7 +163,7 @@ function renderKeywordOptions(selected = []) {
   if (!keywordValues.length) {
     const message = document.createElement("p");
     message.className = "p-2 text-sm opacity-70";
-    message.textContent = "No keyword options are available.";
+    message.textContent = ui.no_keyword_options;
     keywordOptions.append(message);
     return;
   }
@@ -176,6 +181,7 @@ function renderKeywordOptions(selected = []) {
     checkbox.className = "checkbox checkbox-sm mt-0.5";
 
     const text = document.createElement("span");
+    text.className = "min-w-0 wrap-anywhere";
     text.textContent = keyword;
 
     label.append(checkbox, text);
@@ -207,7 +213,7 @@ function readFormState(page = 1) {
 
 function validateState(state) {
   if (state.start && state.end && state.start > state.end) {
-    setStatus("The start date must be on or before the end date.", "error");
+    setStatus(ui.date_order_error, "error");
     dateFrom.focus();
     return false;
   }
@@ -243,7 +249,7 @@ function runSearch(state, { updateUrl: shouldUpdateUrl = true } = {}) {
   requestId += 1;
   searchButton.disabled = true;
   retryButton.hidden = true;
-  setStatus("Searching the configured catalogue…");
+  setStatus(ui.searching);
   worker.postMessage({ type: "search", requestId, payload: activeState });
 }
 
@@ -267,7 +273,9 @@ function renderResults(result) {
 
   resultsCount.hidden = false;
   searchButton.disabled = false;
-  resultsCount.textContent = `${matches} dataset${matches === 1 ? "" : "s"} found`;
+  resultsCount.textContent = matches === 1
+    ? ui.found_dataset
+    : format(ui.found_datasets, { count: matches });
   resultsList.replaceChildren();
 
   for (const record of result.records) {
@@ -277,15 +285,17 @@ function renderResults(result) {
   if (!matches) {
     const empty = document.createElement("p");
     empty.className = "rounded-box border border-base-300 bg-base-100 p-6 text-sm";
-    empty.textContent = "No datasets match these filters. Try changing or clearing a filter.";
+    empty.textContent = ui.no_match;
     resultsList.append(empty);
   }
 
   pagination.hidden = matches <= PAGE_SIZE;
   previousButton.disabled = currentPage <= 1;
   nextButton.disabled = currentPage >= totalPages;
-  pageStatus.textContent = totalPages ? `Page ${currentPage} of ${totalPages}` : "No pages";
-  setStatus("Search complete.");
+  pageStatus.textContent = totalPages
+    ? format(ui.page_of, { page: currentPage, total: totalPages })
+    : ui.no_pages;
+  setStatus(ui.search_complete);
 }
 
 function renderRecord(record) {
@@ -319,7 +329,7 @@ function renderRecord(record) {
     keywords.className = "flex flex-wrap gap-2";
     for (const keyword of record.keywords) {
       const badge = document.createElement("span");
-      badge.className = "badge badge-primary badge-outline";
+      badge.className = "badge badge-primary badge-outline max-w-full h-auto min-h-6 whitespace-normal wrap-anywhere";
       badge.textContent = keyword;
       keywords.append(badge);
     }
@@ -329,7 +339,7 @@ function renderRecord(record) {
   if (record.modified) {
     const modified = document.createElement("p");
     modified.className = "text-xs opacity-70";
-    modified.textContent = `Metadata updated: ${record.modified}`;
+    modified.textContent = format(ui.updated_date, { date: record.modified });
     body.append(modified);
   }
 
@@ -339,7 +349,12 @@ function renderRecord(record) {
 
 function formatBounds(bounds) {
   const [west, south, east, north] = bounds;
-  return `Rectangle selected (${west.toFixed(2)}, ${south.toFixed(2)} to ${east.toFixed(2)}, ${north.toFixed(2)}).`;
+  return format(ui.selected_rectangle, {
+    west: west.toFixed(2),
+    south: south.toFixed(2),
+    east: east.toFixed(2),
+    north: north.toFixed(2),
+  });
 }
 
 function updateAreaStatus() {
@@ -348,9 +363,9 @@ function updateAreaStatus() {
     ? formatBounds(selectedBounds)
     : drawMode
       ? firstCorner
-        ? "First corner selected. Choose the opposite corner."
-        : "Choose the first corner, then the opposite corner."
-      : "No area selected.";
+        ? ui.first_corner
+        : ui.choose_corners
+      : ui.no_area;
 }
 
 function featureCollection(bounds = selectedBounds, draftCorner = firstCorner) {
@@ -445,7 +460,7 @@ async function ensureMap() {
       firstCorner = null;
       if (west === east || south === north) {
         drawMode = true;
-        areaStatus.textContent = "Choose two distinct corners to make a rectangle.";
+        areaStatus.textContent = ui.distinct_corners;
         return;
       }
       drawMode = false;
@@ -483,7 +498,7 @@ drawAreaButton.addEventListener("click", async () => {
     updateAreaStatus();
   } catch (error) {
     console.error("Could not load area map", error);
-    areaStatus.textContent = "The map could not be loaded. Try again later.";
+    areaStatus.textContent = ui.map_error;
   }
 });
 
@@ -505,7 +520,7 @@ areaDetails.addEventListener("toggle", () => {
     })
     .catch((error) => {
       console.error("Could not load area map", error);
-      areaStatus.textContent = "The map could not be loaded. Try again later.";
+      areaStatus.textContent = ui.map_error;
     });
 });
 
@@ -527,7 +542,7 @@ clearFiltersButton.addEventListener("click", () => {
   resultsList.replaceChildren();
   pagination.hidden = true;
   window.history.pushState(null, "", window.location.pathname);
-  setStatus(workerReady ? "Search is ready. Set filters and select Search to browse the catalogue." : "Search service is unavailable. Retry the connection.");
+  setStatus(workerReady ? ui.search_ready : ui.search_unavailable);
 });
 
 retryButton.addEventListener("click", startWorker);
@@ -562,7 +577,7 @@ window.addEventListener("popstate", () => {
     resultsCount.hidden = true;
     resultsList.replaceChildren();
     pagination.hidden = true;
-    if (workerReady) setStatus("Search is ready. Set filters and select Search to browse the catalogue.");
+    if (workerReady) setStatus(ui.search_ready);
   }
 });
 

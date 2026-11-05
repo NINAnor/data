@@ -217,7 +217,7 @@ async function initialize(cswUrl) {
   if (initialization) return initialization;
 
   initialization = (async () => {
-    self.postMessage({ type: "status", message: "Loading browser Python runtime…" });
+    self.postMessage({ type: "status", key: "loading_python" });
     importScripts(`${PYODIDE_BASE}pyodide.js`);
     pyodide = await loadPyodide({ indexURL: PYODIDE_BASE });
 
@@ -246,7 +246,7 @@ async function initialize(cswUrl) {
     }
     await pyodide.runPythonAsync(PYTHON_SEARCH);
 
-    self.postMessage({ type: "status", message: "Connecting to catalogue…" });
+    self.postMessage({ type: "status", key: "connecting_catalogue" });
     pyodide.globals.set("_csw_url", cswUrl);
     const keywordsJson = await pyodide.runPythonAsync("initialize_catalogue_json(_csw_url)");
     const keywords = JSON.parse(String(keywordsJson));

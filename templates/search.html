@@ -8,12 +8,12 @@
 {% block content %}
   <noscript>
     <p class="mb-6 rounded-box border border-warning/40 bg-warning/10 p-4 text-sm">
-      Dataset search requires JavaScript to query the configured catalogue.
+      {{ ui.search_noscript }}
     </p>
   </noscript>
 
   <p class="mb-6 max-w-3xl text-base-content/75">
-    Search the configured CSW catalogue by metadata text, keywords, area, or metadata update date.
+    {{ ui.search_intro }}
   </p>
 
   <div class="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)]">
@@ -21,48 +21,48 @@
       <form id="search-form" class="card border border-base-300 bg-base-100 shadow-sm">
         <div class="card-body gap-5">
           <div>
-            <label class="label" for="query"><span class="label-text font-semibold">Search text</span></label>
-            <input id="query" name="q" type="search" class="input input-bordered w-full" placeholder="Title, abstract, or metadata">
+            <label class="label" for="query"><span class="label-text font-semibold">{{ ui.search_text }}</span></label>
+            <input id="query" name="q" type="search" class="input input-bordered w-full" placeholder="{{ ui.query_placeholder }}">
           </div>
 
           <fieldset>
-            <legend class="label"><span class="label-text font-semibold">Keywords</span></legend>
-            <label class="label" for="keyword-search"><span class="label-text text-sm">Find a keyword</span></label>
-            <input id="keyword-search" type="search" class="input input-bordered input-sm w-full" placeholder="Filter keyword list" autocomplete="off">
-            <div id="keyword-options" class="keyword-options mt-3 rounded-box border border-base-300 p-2" aria-label="Keyword options">
-              <p class="p-2 text-sm opacity-70">Loading keywords…</p>
+            <legend class="label"><span class="label-text font-semibold">{{ ui.keywords }}</span></legend>
+            <label class="label" for="keyword-search"><span class="label-text text-sm">{{ ui.find_keyword }}</span></label>
+            <input id="keyword-search" type="search" class="input input-bordered input-sm w-full" placeholder="{{ ui.filter_keywords }}" autocomplete="off">
+            <div id="keyword-options" class="keyword-options mt-3 rounded-box border border-base-300 p-2" aria-label="{{ ui.keywords }}">
+              <p class="p-2 text-sm opacity-70">{{ ui.loading_keywords }}</p>
             </div>
-            <p class="mt-2 text-xs opacity-70">Records must match every selected keyword.</p>
+            <p class="mt-2 text-xs opacity-70">{{ ui.all_keywords }}</p>
           </fieldset>
 
           <fieldset>
-            <legend class="label"><span class="label-text font-semibold">Metadata updated</span></legend>
+            <legend class="label"><span class="label-text font-semibold">{{ ui.metadata_updated }}</span></legend>
             <div class="grid grid-cols-2 gap-3">
               <label>
-                <span class="label-text text-sm">From</span>
+                <span class="label-text text-sm">{{ ui.from }}</span>
                 <input id="date-from" name="start" type="date" class="input input-bordered input-sm mt-1 w-full">
               </label>
               <label>
-                <span class="label-text text-sm">To</span>
+                <span class="label-text text-sm">{{ ui.to }}</span>
                 <input id="date-to" name="end" type="date" class="input input-bordered input-sm mt-1 w-full">
               </label>
             </div>
           </fieldset>
 
           <details id="area-filter" class="rounded-box border border-base-300 p-3">
-            <summary class="cursor-pointer font-semibold">Area</summary>
-            <p class="mt-3 text-sm opacity-75">Open the map, select <strong>Draw rectangle</strong>, then choose two opposite corners.</p>
-            <div id="search-map" class="search-map mt-3 overflow-hidden rounded-box border border-base-300" aria-label="Map for drawing a search rectangle"></div>
+            <summary class="cursor-pointer font-semibold">{{ ui.area }}</summary>
+            <p class="mt-3 text-sm opacity-75">{{ ui.draw_instructions }}</p>
+            <div id="search-map" class="search-map mt-3 overflow-hidden rounded-box border border-base-300" aria-label="{{ ui.map_for_search }}"></div>
             <div class="mt-3 flex flex-wrap gap-2">
-              <button id="draw-area" type="button" class="btn btn-sm btn-outline">Draw rectangle</button>
-              <button id="clear-area" type="button" class="btn btn-sm btn-ghost" disabled>Clear area</button>
+              <button id="draw-area" type="button" class="btn btn-sm btn-outline">{{ ui.draw_rectangle }}</button>
+              <button id="clear-area" type="button" class="btn btn-sm btn-ghost" disabled>{{ ui.clear_area }}</button>
             </div>
-            <p id="area-status" class="mt-2 text-sm opacity-75" aria-live="polite">No area selected.</p>
+            <p id="area-status" class="mt-2 text-sm opacity-75" aria-live="polite">{{ ui.no_area }}</p>
           </details>
 
           <div class="flex flex-wrap gap-2">
-            <button id="search-button" type="submit" class="btn btn-primary flex-1" disabled>Search</button>
-            <button id="clear-filters" type="button" class="btn btn-outline">Clear</button>
+            <button id="search-button" type="submit" class="btn btn-primary flex-1" disabled>{{ ui.search }}</button>
+            <button id="clear-filters" type="button" class="btn btn-outline">{{ ui.clear }}</button>
           </div>
         </div>
       </form>
@@ -70,25 +70,26 @@
 
     <section aria-labelledby="results-heading">
       <div class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="results-heading" class="text-2xl font-bold">Results</h2>
+        <h2 id="results-heading" class="text-2xl font-bold">{{ ui.results }}</h2>
         <p id="results-count" class="text-sm font-medium" hidden></p>
       </div>
 
       <div id="search-status" class="mb-4 rounded-box border border-base-300 bg-base-100 p-4 text-sm" role="status" aria-live="polite">
-        Loading the search service…
+        {{ ui.loading_search }}
       </div>
-      <button id="retry-search" type="button" class="btn btn-outline mb-4" hidden>Retry connection</button>
+      <button id="retry-search" type="button" class="btn btn-outline mb-4" hidden>{{ ui.retry_connection }}</button>
       <div id="results-list" class="grid gap-4"></div>
 
-      <nav id="results-pagination" class="mt-6 flex items-center justify-between gap-4" aria-label="Search results pages" hidden>
-        <button id="previous-page" type="button" class="btn btn-outline">Previous</button>
+      <nav id="results-pagination" class="mt-6 flex items-center justify-between gap-4" aria-label="{{ ui.results }}" hidden>
+        <button id="previous-page" type="button" class="btn btn-outline">{{ ui.previous }}</button>
         <p id="page-status" class="text-sm" aria-live="polite"></p>
-        <button id="next-page" type="button" class="btn btn-outline">Next</button>
+        <button id="next-page" type="button" class="btn btn-outline">{{ ui.next }}</button>
       </nav>
     </section>
   </div>
 
   {{ detail_urls|json_script:"dataset-detail-urls" }}
   {{ catalogue.csw_url|json_script:"csw-endpoint" }}
+  {{ ui|json_script:"ui-strings" }}
   <script type="module" src="{% static 'js/search.js' %}"></script>
 {% endblock %}

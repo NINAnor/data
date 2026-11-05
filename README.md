@@ -48,6 +48,8 @@ pixi run -e dev build-static
 
 The generated site is written to `output/`; each build recreates that generated directory.
 
+The catalogue is available in English at `/` and Norwegian Bokmål at `/no/`. The language switcher links to the equivalent page in the other language. Interface text is translated; dataset metadata remains in the language supplied by the CSW records.
+
 For a local experiment against the larger integration catalogue, override the endpoint for that build only:
 
 ```bash

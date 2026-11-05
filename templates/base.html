@@ -17,12 +17,16 @@
   </head>
   <body class="flex min-h-screen flex-col bg-base-200 font-sans text-base-content">
     <header class="border-b border-base-300 bg-base-100">
-      <nav class="mx-auto flex min-h-20 max-w-screen-2xl items-center justify-between gap-6 px-4 sm:px-8" aria-label="Main navigation">
-        <a class="shrink-0" href="/" aria-label="{{ site.title }} home">
+      <nav class="mx-auto flex min-h-20 max-w-screen-2xl items-center justify-between gap-6 px-4 sm:px-8" aria-label="{{ ui.main_navigation }}">
+        <a class="shrink-0" href="{% if language == 'no' %}/no/{% else %}/{% endif %}" aria-label="{{ site.title }} {{ ui.home }}">
           <img class="h-auto w-44 sm:w-52" src="{% static 'assets/logo.svg' %}" alt="NINA — {{ site.title }}" width="209" height="49">
         </a>
         <div class="flex items-center gap-2 sm:gap-6">
-          <a class="btn btn-accent btn-sm sm:btn-md" href="/search/">Explore datasets</a>
+          <a class="btn btn-accent btn-sm sm:btn-md" href="{% if language == 'no' %}/no/search/{% else %}/search/{% endif %}">{{ ui.explore_datasets }}</a>
+          <a class="btn btn-outline btn-sm rounded-full gap-2 border-base-300 bg-base-100 px-3 normal-case hover:border-primary hover:bg-base-200" href="{{ language_switch_url }}" lang="{% if language == 'no' %}en{% else %}nb{% endif %}" aria-label="{{ ui.language_selector }}: {{ ui.switch_language }}">
+            <span class="text-base leading-none" aria-hidden="true">{% if language == 'no' %}🇬🇧{% else %}🇳🇴{% endif %}</span>
+            <span>{{ ui.switch_language }}</span>
+          </a>
         </div>
       </nav>
     </header>
@@ -43,7 +47,7 @@
             {% if footer.phone %}<a class="w-fit underline-offset-4 hover:underline" href="{{ footer.phone.href }}">{{ footer.phone.label }}</a>{% endif %}
             {% if footer.email %}<a class="w-fit underline-offset-4 hover:underline" href="{{ footer.email.href }}">{{ footer.email.label }}</a>{% endif %}
           </div>
-          <nav class="flex flex-wrap gap-x-5 gap-y-2 text-sm sm:justify-end" aria-label="Footer navigation">
+          <nav class="flex flex-wrap gap-x-5 gap-y-2 text-sm sm:justify-end" aria-label="{{ ui.footer_navigation }}">
             {% for link in footer.links %}<a class="underline-offset-4 hover:underline" href="{{ link.url }}">{{ link.label }}</a>{% endfor %}
           </nav>
         </div>

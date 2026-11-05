@@ -28,7 +28,7 @@
       <img
         class="absolute inset-0 h-full max-h-24 w-full object-cover"
         src="{{ dataset.preview }}"
-        alt="Preview of {{ dataset.title }}"
+        alt="{{ dataset.preview_alt }}"
         loading="lazy"
         decoding="async"
         data-dataset-preview
@@ -37,18 +37,18 @@
   </div>
   <div class="card-body">
     <h2 class="card-title text-primary">
-      <a href="/datasets/{{ dataset.slug }}/" data-dataset-title>{{ dataset.title }}</a>
+      <a href="{% if language == 'no' %}/no{% endif %}/datasets/{{ dataset.slug }}/" data-dataset-title>{{ dataset.title }}</a>
     </h2>
     <div
       class="flex flex-wrap gap-2"
-      aria-label="Dataset tags"
+      aria-label="{{ ui.dataset_tags }}"
       data-dataset-tags
       {% if not dataset.keyword_tags %}hidden{% endif %}
     >
       {% for tag in dataset.keyword_tags %}
         <a
-          class="badge badge-secondary badge-outline"
-          href="/search/?submitted=1&amp;keyword={{ tag|urlencode }}"
+          class="badge badge-secondary badge-outline max-w-full h-auto min-h-6 whitespace-normal wrap-anywhere"
+          href="{% if language == 'no' %}/no{% endif %}/search/?submitted=1&amp;keyword={{ tag|urlencode }}"
         >{{ tag }}</a>
       {% endfor %}
     </div>

@@ -1,62 +1,39 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
-  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {% for dataset in datasets %}
-      <article
-        id="{{ dataset.identifier }}"
-        class="card border border-base-300 bg-base-100 shadow-sm"
-      >
-        <div class="relative h-24 max-h-24 w-full overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary/10 via-base-200 to-accent/15" aria-hidden="true">
-            <span class="rounded-full bg-base-100/70 p-2.5 text-secondary shadow-sm">
-              <svg
-                class="h-8 w-8"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 48 48"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="7" y="9" width="34" height="30" rx="9" fill="currentColor" opacity=".08" />
-                <circle cx="31" cy="19" r="4" fill="#cc8614" stroke="none" />
-                <path d="m11 34 9-11 7 8 5-6 5 6v3H11Z" fill="currentColor" opacity=".25" />
-                <path d="m11 34 9-11 7 8 5-6 5 6M11 34h26" />
-              </svg>
-            </span>
-          </div>
-          {% if dataset.preview %}
-            <img
-              class="absolute inset-0 h-full max-h-24 w-full object-cover"
-              src="{{ dataset.preview }}"
-              alt="Preview of {{ dataset.title }}"
-              loading="lazy"
-              decoding="async"
-              data-dataset-preview
-            >
-          {% endif %}
-        </div>
-        <div class="card-body">
-          <h2 class="card-title text-primary">
-            <a href="/datasets/{{ dataset.slug }}/">{{ dataset.title }}</a>
-          </h2>
-          {% if dataset.keyword_tags %}
-            <div class="flex flex-wrap gap-2" aria-label="Dataset tags">
-              {% for tag in dataset.keyword_tags %}
-                <a
-                  class="badge badge-secondary badge-outline"
-                  href="/search/?submitted=1&amp;keyword={{ tag|urlencode }}"
-                >{{ tag }}</a>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
-      </article>
-    {% empty %}
-      <p class="col-span-full rounded-box bg-base-100 p-6">No catalogue records found.</p>
-    {% endfor %}
-  </div>
+  <section
+    id="dataset-catalogue"
+    data-total="{{ dataset_total }}"
+    data-loaded="{{ dataset_initial_count }}"
+    data-next-page="{{ dataset_next_page }}"
+  >
+    <div id="dataset-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {% for dataset in datasets %}
+        {% include "_dataset_card.html" %}
+      {% empty %}
+        <p class="col-span-full rounded-box bg-base-100 p-6">No catalogue records found.</p>
+      {% endfor %}
+    </div>
+
+    <div class="mt-8 flex flex-col items-center gap-3">
+      <p id="dataset-count" class="text-sm" aria-live="polite">Showing {{ dataset_initial_count }} of {{ dataset_total }} datasets</p>
+      <p id="dataset-load-status" class="text-sm text-error-content" role="status" hidden></p>
+      <button
+        id="load-more-datasets"
+        class="btn btn-secondary"
+        type="button"
+        {% if not dataset_next_page %}hidden{% endif %}
+      >Load more</button>
+      {% if dataset_next_page %}
+        <noscript><p class="text-sm">Enable JavaScript to load the remaining datasets.</p></noscript>
+      {% endif %}
+    </div>
+  </section>
+
+  <template id="dataset-card-template">
+    {% include "_dataset_card.html" with dataset=empty_dataset %}
+  </template>
+
+  <script type="module" src="{% static 'js/catalogue.js' %}"></script>
 {% endblock %}

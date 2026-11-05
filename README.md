@@ -40,13 +40,21 @@ pixi run -e dev start
 To rebuild CSS while editing, run `pixi run -e dev watch-css` in a second terminal.
 
 ### Build the static site
-The catalogue index and one metadata page per dataset are generated from the configured CSW endpoint (`catalogue.csw_url` in `templates/site.yml`). The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated:
+The catalogue index and one metadata page per dataset are generated from the configured CSW endpoint (`catalogue.csw_url` in `templates/site.yml`). The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated. The homepage renders its first 12 datasets in HTML and loads later groups of 12 from generated JSON files when requested. The card grid uses four columns on extra-large screens. Cards are ordered by modification date, newest first; records without a valid date appear last.
 
 ```bash
 pixi run -e dev build-static
 ```
 
 The generated site is written to `output/`; each build recreates that generated directory.
+
+For a local experiment against the larger integration catalogue, override the endpoint for that build only:
+
+```bash
+CSW_URL=https://pycsw-int.nina.no/csw pixi run -e dev build-static
+```
+
+The GitHub Pages workflow does not set `CSW_URL`, so production continues to use the endpoint in `templates/site.yml`.
 
 The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query the configured endpoint directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
 

@@ -4,12 +4,13 @@ import hashlib
 import logging
 import pathlib
 import re
+from datetime import datetime, timezone
 from functools import cache
 from urllib.parse import urlsplit
 
 import environ
 import yaml
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.utils.text import slugify
 from nanodjango import Django
 from owslib.csw import CatalogueServiceWeb
@@ -26,6 +27,7 @@ logging.basicConfig(level=(logging.DEBUG if DEBUG else logging.INFO))
 logger = logging.getLogger(__name__)
 app = Django(DEBUG=DEBUG)
 CSW_PAGE_SIZE = 100
+CATALOGUE_PAGE_SIZE = 12
 CSW_TYPE_NAMES = "gmd:MD_Metadata"
 CSW_OUTPUT_SCHEMA = "http://www.isotc211.org/2005/gmd"
 SITE_CONFIG_PATH = BASE_DIR / "templates" / "site.yml"
@@ -39,9 +41,10 @@ def load_site_config(path=SITE_CONFIG_PATH):
     for section in ("site", "catalogue", "footer"):
         if not isinstance(config.get(section), dict):
             raise ValueError(f"Site config must define a '{section}' mapping: {path}")
-    csw_url = config["catalogue"].get("csw_url")
+    csw_url = env.str("CSW_URL", default=config["catalogue"].get("csw_url"))
     if not isinstance(csw_url, str) or not csw_url.startswith(("http://", "https://")):
         raise ValueError(f"Site config must define a valid catalogue.csw_url: {path}")
+    config["catalogue"]["csw_url"] = csw_url
     return config
 
 
@@ -100,6 +103,36 @@ def dataset_slug(identifier):
     label = slugify(identifier)[:80] or "dataset"
     suffix = hashlib.sha256(identifier.encode("utf-8")).hexdigest()[:10]
     return f"{label}-{suffix}"
+
+
+def modified_datetime(value):
+    """Parse a CSW modified timestamp, treating timezone-naive values as UTC."""
+    if isinstance(value, datetime):
+        modified = value
+    elif isinstance(value, str) and value.strip():
+        try:
+            modified = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    else:
+        return None
+
+    if modified.tzinfo is None:
+        modified = modified.replace(tzinfo=timezone.utc)
+    return modified.astimezone(timezone.utc)
+
+
+def dataset_sort_key(dataset):
+    """Sort newest records first, with stable title/identifier tie-breaks."""
+    modified = modified_datetime(dataset.get("modified"))
+    return (
+        modified is None,
+        -modified.timestamp() if modified else 0,
+        dataset["title"].casefold(),
+        dataset["title"],
+        dataset["identifier"].casefold(),
+        dataset["identifier"],
+    )
 
 
 def flatten_metadata(value, path=""):
@@ -423,6 +456,7 @@ def catalogue_datasets():
                 "identifier": identifier,
                 "slug": dataset_slug(identifier),
                 "title": title,
+                "modified": getattr(record, "datestamp", None),
                 "abstract": primary_text(identification.get("abstract")),
                 "preview": dataset_preview(identification),
                 "keyword_tags": keyword_tags(identification),
@@ -433,7 +467,33 @@ def catalogue_datasets():
             }
         )
 
-    return datasets
+    return sorted(datasets, key=dataset_sort_key)
+
+
+def dataset_chunk_pages():
+    """Return static JSON page parameters, keeping page 2 valid for empty catalogues."""
+    total_pages = (
+        len(catalogue_datasets()) + CATALOGUE_PAGE_SIZE - 1
+    ) // CATALOGUE_PAGE_SIZE
+    return [{"page": page} for page in range(2, max(2, total_pages) + 1)]
+
+
+def dataset_page_payload(page):
+    """Build the compact, public card data for one lazily loaded catalogue page."""
+    datasets = catalogue_datasets()
+    start = (page - 1) * CATALOGUE_PAGE_SIZE
+    items = datasets[start : start + CATALOGUE_PAGE_SIZE]
+    next_page = page + 1 if start + len(items) < len(datasets) else None
+    return {
+        "datasets": [
+            {
+                key: dataset[key]
+                for key in ("identifier", "slug", "title", "preview", "keyword_tags")
+            }
+            for dataset in items
+        ],
+        "next_page": next_page,
+    }
 
 
 def dataset_pages():
@@ -445,15 +505,32 @@ def dataset_pages():
 def catalogue(request):
     """Render the catalogue index with links to every dataset page."""
     config = shared_template_context()
+    datasets = catalogue_datasets()
     return app.render(
         request,
         "index.html",
         context={
             **config,
             "title": config["site"]["title"],
-            "datasets": catalogue_datasets(),
+            "datasets": datasets[:CATALOGUE_PAGE_SIZE],
+            "dataset_total": len(datasets),
+            "dataset_initial_count": min(len(datasets), CATALOGUE_PAGE_SIZE),
+            "dataset_next_page": 2 if len(datasets) > CATALOGUE_PAGE_SIZE else "",
+            "empty_dataset": {
+                "identifier": "",
+                "slug": "",
+                "title": "",
+                "preview": "",
+                "keyword_tags": [],
+            },
         },
     )
+
+
+@app.route("/data/datasets/<int:page>.json", distill_func=dataset_chunk_pages)
+def dataset_chunk(request, page):
+    """Return one static JSON page of catalogue cards."""
+    return JsonResponse(dataset_page_payload(page))
 
 
 @app.route("/search/", distill_file="search/index.html")

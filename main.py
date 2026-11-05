@@ -5,6 +5,7 @@ import logging
 import pathlib
 import re
 from functools import cache
+from urllib.parse import urlsplit
 
 import environ
 import yaml
@@ -354,6 +355,16 @@ def primary_text(value):
     return "" if value is None else str(value)
 
 
+def dataset_preview(identification):
+    """Return a valid HTTP(S) ISO browse graphic URL, if one is available."""
+    preview = primary_text(identification.get("browsegraphic"))
+    try:
+        parsed = urlsplit(preview)
+    except ValueError:
+        return ""
+    return preview if parsed.scheme in {"http", "https"} and parsed.netloc else ""
+
+
 def spatial_extent(identification):
     """Return the first valid WGS84 bounding box from pygeometa metadata."""
     extents = identification.get("extents", {}).get("spatial", [])
@@ -413,6 +424,7 @@ def catalogue_datasets():
                 "slug": dataset_slug(identifier),
                 "title": title,
                 "abstract": primary_text(identification.get("abstract")),
+                "preview": dataset_preview(identification),
                 "keyword_tags": keyword_tags(identification),
                 "contacts": contact_cards(metadata.get("contact", {})),
                 "resources": distribution_cards(metadata.get("distribution", {})),

@@ -58,6 +58,8 @@ The GitHub Pages workflow does not set `CSW_URL`, so production continues to use
 
 The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query the configured endpoint directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
 
+OWSLib and its installed dependencies are copied to a version-scoped Emscripten IDBFS cache and restored on later visits; Pyodide's runtime files use the browser's regular HTTP cache. IDBFS is not Pyodide's default filesystem, so the search worker mounts it and explicitly synchronizes reads and writes. If IndexedDB is unavailable or over quota, search falls back to the normal OWSLib installation path.
+
 The configured CSW endpoint must allow CORS from the deployed site origin for GET and POST requests, including OPTIONS preflight and the XML POST content type. Without that endpoint configuration, search displays a connection error and offers retry; the static catalogue pages remain available.
 
 ### Pixi (optional)

@@ -1,138 +1,51 @@
-# datasets
+# NINA Public Catalog
 
-## Setup
-Install `uv`: https://docs.astral.sh/uv/getting-started/installation/
+Static bilingual catalogue site built with Astro and React using TypeScript/TSX. Catalogue data comes exclusively from the NINA OGC API Records endpoint through [`@camptocamp/ogc-client`](https://github.com/camptocamp/ogc-client).
 
-```bash
-git init
-uv sync --dev
-git add .
-git commit -m "Initial commit"
-uv run prek install # optional
-```
+## Requirements
 
+- Node.js 22.12 or newer
+- pnpm 12
 
-### Run
-Start the app with Pixi so CSS is generated and static files are collected first:
-```bash
-pixi run -e dev start
-```
-
-For direct uv execution, generate the stylesheet first:
-```bash
-pixi run -e dev build-css
-uv run python main.py manage collectstatic --noinput
-uv run main.py
-```
-
-Run the installed command after building CSS:
-```bash
-uvx --from . datasets
-```
-
-### Development
-Start the app with Pixi so it builds the stylesheet first:
+## Development
 
 ```bash
-pixi run -e dev start
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-To rebuild CSS while editing, run `pixi run -e dev watch-css` in a second terminal.
+Astro development server runs at `http://localhost:4321/`. Tailwind CSS and DaisyUI are integrated into Astro’s Vite pipeline.
 
-### Build the static site
-The catalogue index and one metadata page per dataset are generated from the configured CSW endpoint (`catalogue.csw_url` in `templates/site.yml`). The build requests ISO 19139 metadata and parses it with pygeometa; CSW results are paginated. The homepage renders its first 12 datasets in HTML and loads later groups of 12 from generated JSON files when requested. The card grid uses four columns on extra-large screens. Cards are ordered by modification date, newest first; records without a valid date appear last.
+Static files served as-is belong in `public/`; imported files that should be bundled belong under `src/`. Site CSS is in `src/styles/`.
+
+## Build and verification
 
 ```bash
-pixi run -e dev build-static
+pnpm test
+pnpm check
+pnpm build
+pnpm preview
 ```
 
-The generated site is written to `output/`; each build recreates that generated directory.
+The static site is generated in `dist/`. Build fetches Records from the configured OGC API, follows pagination, and requests ISO 19139 XML for full dataset details. The current default endpoint is `https://csw.nina.no` and collection is `metadata:main`.
 
-The catalogue is available in English at `/` and Norwegian Bokmål at `/no/`. The language switcher links to the equivalent page in the other language. Interface text is translated; dataset metadata remains in the language supplied by the CSW records.
-
-For a local experiment against the larger integration catalogue, override the endpoint for that build only:
+The site title, description, collection, and available contact details are discovered from the OGC API landing page, collection list, and OpenAPI document. The API does not publish the footer phone or street address, so those retain NINA defaults. Override the API root or collection for a build with:
 
 ```bash
-CSW_URL=https://pycsw-int.nina.no/csw pixi run -e dev build-static
+OGC_API_URL=https://csw.nina.no OGC_COLLECTION_ID=metadata:main pnpm build
 ```
 
-The GitHub Pages workflow does not set `CSW_URL`, so production continues to use the endpoint in `templates/site.yml`.
+The API must allow browser CORS access for the search page. It must expose OGC API Records JSON and ISO 19139 XML for individual items.
 
-The build also creates `/search/`. Its browser-side search uses Pyodide 0.29.5 and OWSLib 0.36.0 to query the configured endpoint directly with CSW 2.0.2 Filter Encoding. The browser loads Pyodide and OWSLib from their public package/CDN sources at runtime.
+## Site behavior
 
-OWSLib and its installed dependencies are copied to a version-scoped Emscripten IDBFS cache and restored on later visits; Pyodide's runtime files use the browser's regular HTTP cache. IDBFS is not Pyodide's default filesystem, so the search worker mounts it and explicitly synchronizes reads and writes. If IndexedDB is unavailable or over quota, search falls back to the normal OWSLib installation path.
+- English at `/` and Norwegian Bokmål at `/no/`, with equivalent-page language links.
+- Astro i18n routing keeps English as the unprefixed default and generates localized links with `astro:i18n`.
+- Homepage cards are ordered by metadata update date; additional records load in groups of 12.
+- Search supports text, all-selected-keyword matching, metadata update date range, and drawn bounding boxes. Search state is shareable through the URL; results use 10-record pages.
+- Each dataset has a statically generated English and Norwegian detail page, including ISO metadata, contacts, resources, keywords, and spatial extent.
+- GitHub Pages builds set Astro’s `base` path directly, including project-site deployments.
 
-The configured CSW endpoint must allow CORS from the deployed site origin for GET and POST requests, including OPTIONS preflight and the XML POST content type. Without that endpoint configuration, search displays a connection error and offers retry; the static catalogue pages remain available.
+## Git hooks
 
-### Pixi (optional)
-Pixi is configured alongside the template's uv environment. The Linux Pixi environment uses Python 3.15 and installs Bun from conda-forge. Bun installs DaisyUI and Tailwind CSS from `package.json`.
-Edit `assets/css/app.css` to change the DaisyUI `nina` palette, `templates/base.html` to change the shared page layout, and `templates/site.yml` to configure the site metadata, CSW endpoint, and footer contact information.
-
-```bash
-pixi install -e dev
-pixi run -e dev start
-pixi run bun --version
-pixi run python --version
-pixi run -e dev check
-```
-
-### Update from template
-To update your project with the latest changes from the template, run:
-```bash
-uvx --with copier-template-extensions copier update --trust
-```
-
-You can keep your previous answers by using:
-```bash
-uvx --with copier-template-extensions copier update --trust --defaults
-```
-
-### (Optional) prek
-prek is a fast, Rust-based tool for managing git hooks (100% compatible with pre-commit). It helps ensure code quality by running checks every time you make a commit.
-
-First, install prek:
-```bash
-uv tool install prek
-```
-
-If you have installed the git hooks with `pre-commit` (template version 0.2.6 and older), remove them before installing the ones provided by prek:
-
-```
-pre-commit uninstall
-```
-
-Then install git hooks:
-```bash
-prek install
-```
-
-To run prek on all files:
-```bash
-prek run --all-files
-```
-
-### How to install a package
-Run `uv add <package-name>` to install a package. For example:
-```bash
-uv add requests
-```
-
-#### Visual studio code
-If you are using visual studio code install the recommended extensions
-
-### Tools installed
-- uv
-- Pixi (optional)
-- Bun (via Pixi)
-- DaisyUI and Tailwind CSS (via Bun)
-- prek (optional)
-
-#### What is an environment variable? and why should I use them?
-Environment variables are variables that are not populated in your code but rather in the environment
-that you are running your code. This is extremely useful mainly for two reasons:
-- security, you can share your code without sharing your passwords/credentials
-- portability, you can avoid using hard-coded values like file-system paths or folder names
-
-you can place your environment variables in a file called `.env`, the `main.py` will read from it. Remember to:
-- NEVER commit your `.env`
-- Keep a `.env.example` file updated with the variables that the software expects
+Husky installs the pre-commit hook during `pnpm install`. The hook formats and lints staged TypeScript/TSX files with Oxfmt and Oxlint, then runs tests and Astro checks.

@@ -1,0 +1,9 @@
+minimumReleaseAgeExclude:
+  - "@astrojs/internal-helpers@0.13.1"
+  - "@astrojs/markdown-satteri@0.4.7"
+  - "@astrojs/react@7.1.4"
+  - astro@7.4.7
+overrides:
+  "@emnapi/runtime": 1.11.3
+allowBuilds:
+  esbuild: true

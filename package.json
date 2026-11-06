@@ -1,14 +1,44 @@
 {
-  "name": "datasets-assets",
+  "name": "nina-public-catalog",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build:css": "tailwindcss -i ./assets/css/app.css -o ./static/css/app.css --minify",
-    "watch:css": "tailwindcss -i ./assets/css/app.css -o ./static/css/app.css --watch"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "prepare": "husky",
+    "lint": "oxlint --react-plugin --jsx-a11y-plugin .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "check": "pnpm lint && pnpm format:check && astro check",
+    "test": "tsx --test tests/*.test.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@astrojs/react": "^7.1.4",
+    "@camptocamp/ogc-client": "^2.0.2",
+    "astro": "^7.4.7",
+    "fast-xml-parser": "^5.12.0",
+    "maplibre-gl": "^6.16.0",
+    "ol": "^10.11.0",
+    "proj4": "^2.22.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
   "devDependencies": {
-    "@tailwindcss/cli": "4.3.0",
+    "@astrojs/check": "^0.9.4",
+    "@tailwindcss/vite": "4.3.0",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "daisyui": "5.5.19",
-    "tailwindcss": "4.3.0"
-  }
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.91.0",
+    "tailwindcss": "4.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@12.8.1"
 }

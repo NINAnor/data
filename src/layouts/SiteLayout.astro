@@ -1,0 +1,74 @@
+---
+import "../styles/app.css";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { assetPath } from "../lib/site";
+import type { SiteContext } from "../types";
+
+interface Props {
+  title?: string;
+  context: SiteContext;
+  switchUrl: string;
+  hidePageHeading?: boolean;
+}
+
+const { title, context, switchUrl, hidePageHeading = false } = Astro.props;
+const { site, footer, ui } = context;
+const base = import.meta.env.BASE_URL;
+const homeUrl = getRelativeLocaleUrl(context.language, "");
+const searchUrl = getRelativeLocaleUrl(context.language, "search/");
+---
+
+<!doctype html>
+<html lang={site.language} data-theme="nina">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={site.description} />
+    <meta name="theme-color" content="#163546" />
+    <meta property="og:title" content={title || site.title} />
+    <meta property="og:description" content={site.description} />
+    <meta property="og:type" content="website" />
+    <title>{title || site.title}</title>
+    <link rel="icon" type="image/svg+xml" href={assetPath("/assets/favicon.svg", base)} />
+    <slot name="head" />
+  </head>
+  <body class="flex min-h-screen flex-col bg-base-200 font-sans text-base-content">
+    <header class="border-b border-base-300 bg-base-100">
+      <nav class="mx-auto flex min-h-20 max-w-screen-2xl items-center justify-between gap-6 px-4 sm:px-8" aria-label={ui.main_navigation}>
+        <a class="shrink-0" href={homeUrl} aria-label={`${site.title} ${ui.home}`}>
+          <img class="h-auto w-44 sm:w-52" src={assetPath("/assets/logo.svg", base)} alt={`NINA — ${site.title}`} width="209" height="49" />
+        </a>
+        <div class="flex items-center gap-2 sm:gap-6">
+          <a class="btn btn-accent btn-sm sm:btn-md" href={searchUrl}>{ui.explore_datasets}</a>
+          <a class="btn btn-outline btn-sm gap-2 rounded-full border-base-300 bg-base-100 px-3 normal-case hover:border-primary hover:bg-base-200" href={switchUrl} lang={context.language === "no" ? "en" : "nb"} aria-label={`${ui.language_selector}: ${ui.switch_language}`}>
+            <span class="text-base leading-none" aria-hidden="true">{context.language === "no" ? "🇬🇧" : "🇳🇴"}</span>
+            <span>{ui.switch_language}</span>
+          </a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto min-h-[70vh] w-full max-w-screen-2xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
+      {!hidePageHeading && <h1 class="mb-6 text-3xl font-bold tracking-tight text-primary sm:text-4xl">{title || site.title}</h1>}
+      <slot />
+    </main>
+
+    <footer class="bg-primary text-primary-content">
+      <div class="mx-auto grid max-w-screen-2xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-8 sm:py-12">
+        <div class="space-y-2">
+          <p class="font-semibold">{footer.organization}</p>
+          {footer.address.map((line) => <p class="text-sm">{line}</p>)}
+        </div>
+        <div class="space-y-5 sm:text-right">
+          <div class="flex flex-col gap-2 text-sm sm:items-end">
+            {footer.phone && <a class="w-fit underline-offset-4 hover:underline" href={footer.phone.href}>{footer.phone.label}</a>}
+            {footer.email && <a class="w-fit underline-offset-4 hover:underline" href={footer.email.href}>{footer.email.label}</a>}
+          </div>
+          <nav class="flex flex-wrap gap-x-5 gap-y-2 text-sm sm:justify-end" aria-label={ui.footer_navigation}>
+            {footer.links.map((link) => <a class="underline-offset-4 hover:underline" href={link.url}>{link.label}</a>)}
+          </nav>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

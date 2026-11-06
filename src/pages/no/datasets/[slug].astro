@@ -1,0 +1,27 @@
+---
+import DatasetDetail from "../../../components/DatasetDetail.astro";
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { loadDatasetDetails, loadRecords, summarizeRecord } from "../../../lib/catalogue";
+import { getSiteContext } from "../../../lib/site";
+import type { Dataset } from "../../../types";
+
+interface Props {
+  dataset: Dataset;
+}
+
+export async function getStaticPaths() {
+  const records = await loadRecords();
+  return Promise.all(records.map(async (record) => {
+    const summary = summarizeRecord(record);
+    return { params: { slug: summary.slug }, props: { dataset: await loadDatasetDetails(record, summary) } };
+  }));
+}
+
+const { dataset } = Astro.props;
+const context = await getSiteContext("no");
+---
+
+<SiteLayout title={dataset.title} context={context} switchUrl={getRelativeLocaleUrl("en", `datasets/${dataset.slug}/`)}>
+  <DatasetDetail dataset={dataset} context={context} />
+</SiteLayout>

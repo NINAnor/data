@@ -1,0 +1,32 @@
+---
+import CatalogueGrid from "../../components/CatalogueGrid";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { loadDatasets } from "../../lib/catalogue";
+import { getSiteContext } from "../../lib/site";
+
+const context = await getSiteContext("no");
+const datasets = await loadDatasets();
+const cards = datasets.slice(0, 12).map(({ identifier, slug, title, preview, keyword_tags }) => ({ identifier, slug, title, preview, keyword_tags }));
+const searchUrl = getRelativeLocaleUrl("no", "search/");
+const datasetUrlPrefix = getRelativeLocaleUrl("no", "datasets/");
+const dataUrlPrefix = getRelativeLocaleUrl("no", "data/datasets/");
+---
+
+<SiteLayout title={context.site.title} context={context} switchUrl={getRelativeLocaleUrl("en", "")}>
+  <section class="hero mb-10 overflow-hidden rounded-box bg-primary text-primary-content">
+    <div class="hero-content w-full px-6 py-10 sm:px-12 sm:py-14">
+      <div class="w-full max-w-4xl">
+        <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-accent">{context.ui.explore}</p>
+        <h2 class="text-3xl font-bold sm:text-4xl">{context.ui.find_datasets}</h2>
+        <p class="mt-3 max-w-2xl text-primary-content/80">{context.ui.search_description}</p>
+        <form action={searchUrl} method="get" class="mt-6 flex flex-col gap-3 sm:flex-row">
+          <label class="sr-only" for="homepage-query">{context.ui.search_all_metadata}</label>
+          <input id="homepage-query" class="input input-lg w-full bg-base-100 text-base-content" type="search" name="q" placeholder={context.ui.search_datasets_placeholder} />
+          <button class="btn btn-accent sm:btn-lg" type="submit">{context.ui.search}</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <CatalogueGrid client:load datasets={cards} total={datasets.length} ui={context.ui} searchUrl={searchUrl} datasetUrlPrefix={datasetUrlPrefix} dataUrlPrefix={dataUrlPrefix} />
+</SiteLayout>

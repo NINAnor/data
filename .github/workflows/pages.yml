@@ -25,42 +25,40 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Pixi environment
-        uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
-          pixi-version: v0.59.0
-          pixi-bin-path: ${{ runner.temp }}/pixi-${{ github.run_id }}-${{ github.run_attempt }}/bin/pixi
-          environments: dev
-          locked: true
+          version: 12.8.1
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Check Astro files
+        run: pnpm check
 
       - name: Configure GitHub Pages
         id: pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
       - name: Build static site
-        run: pixi run -e dev build-static
-
-      - name: Prefix links for project Pages site
-        if: steps.pages.outputs.base_path != ''
+        run: pnpm build
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-
-          base_path = os.environ["PAGES_BASE_PATH"].rstrip("/")
-          for page in Path("output").rglob("*.html"):
-              html = page.read_text()
-              html = html.replace('href="/', f'href="{base_path}/')
-              html = html.replace('src="/', f'src="{base_path}/')
-              page.write_text(html)
-          PY
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
-          path: output/
+          path: dist/
 
   deploy:
     runs-on: ubuntu-latest

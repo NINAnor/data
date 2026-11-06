@@ -1,6 +1,3 @@
 {
-    "recommendations": [
-        "charliermarsh.ruff",
-        "elagil.pre-commit-helper"
-    ]
+  "recommendations": ["astro-build.astro-vscode", "bradlc.vscode-tailwindcss", "oxc.oxc-vscode"]
 }

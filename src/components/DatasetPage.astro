@@ -1,0 +1,24 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import DatasetDetail from "./DatasetDetail.astro";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import { getSiteContext } from "../lib/site";
+import type { Dataset, Language } from "../types";
+
+interface Props {
+  dataset: Dataset;
+  locale: Language;
+}
+
+const { dataset, locale } = Astro.props;
+const alternateLocale: Language = locale === "en" ? "no" : "en";
+const context = await getSiteContext(locale);
+---
+
+<SiteLayout
+  title={dataset.title}
+  context={context}
+  switchUrl={getRelativeLocaleUrl(alternateLocale, `datasets/${dataset.slug}/`)}
+>
+  <DatasetDetail dataset={dataset} context={context} />
+</SiteLayout>

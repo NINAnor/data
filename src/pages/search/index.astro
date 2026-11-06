@@ -1,23 +1,5 @@
 ---
-import SearchApp from "../../components/SearchApp";
-import SiteLayout from "../../layouts/SiteLayout.astro";
-import { getRelativeLocaleUrl } from "astro:i18n";
-import { loadDatasets, loadKeywords, loadRecords, summarizeRecord } from "../../lib/catalogue";
-import { getSiteContext } from "../../lib/site";
-
-const context = await getSiteContext("en");
-const [records, keywords, datasets] = await Promise.all([
-  loadRecords(),
-  loadKeywords(),
-  loadDatasets(),
-]);
-const urls = Object.fromEntries(records.map((record) => {
-  const summary = summarizeRecord(record);
-  return [summary.identifier, getRelativeLocaleUrl("en", `datasets/${summary.slug}/`)];
-}));
-const previewUrls = Object.fromEntries(datasets.map((dataset) => [dataset.identifier, dataset.preview]));
+import SearchPage from "../../components/SearchPage.astro";
 ---
 
-<SiteLayout title={context.ui.search_page_title} context={context} switchUrl={getRelativeLocaleUrl("no", "search/")} hidePageHeading>
-  <SearchApp client:load catalogueUrl={context.catalogue.url} collectionId={context.catalogue.collectionId} keywords={keywords} detailUrls={urls} previewUrls={previewUrls} ui={context.ui} />
-</SiteLayout>
+<SearchPage locale="en" />

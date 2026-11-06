@@ -41,3 +41,6 @@ jobs:
 
       - name: Build static site
         run: pnpm build
+        env:
+          OGC_API_URL: https://demo.pycsw.org/cite
+          OGC_COLLECTION_ID: metadata:main

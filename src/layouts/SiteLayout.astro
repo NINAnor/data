@@ -17,6 +17,9 @@ const base = import.meta.env.BASE_URL;
 const homeUrl = getRelativeLocaleUrl(context.language, "");
 const searchUrl = getRelativeLocaleUrl(context.language, "search/");
 const aboutUrl = getRelativeLocaleUrl(context.language, "about/");
+const currentLanguage = context.language === "no" ? "NO" : "EN";
+const alternateLanguage = context.language === "no" ? "EN" : "NO";
+const currentLanguageName = context.language === "no" ? "Norsk" : "English";
 ---
 
 <!doctype html>
@@ -43,10 +46,27 @@ const aboutUrl = getRelativeLocaleUrl(context.language, "about/");
           <a class="btn btn-accent btn-sm sm:btn-md" href={searchUrl}>{ui.explore_datasets}</a>
           <a class="btn btn-outline btn-sm sm:btn-md" href={aboutUrl}>{ui.about}</a>
           <a class="btn btn-outline btn-sm sm:btn-md" href="https://maps.nina.no" target="_blank" rel="noreferrer">{ui.nina_maps}</a>
-          <a class="btn btn-outline btn-sm gap-2 rounded-full border-base-300 bg-base-100 px-3 normal-case hover:border-primary hover:bg-base-200" href={switchUrl} lang={context.language === "no" ? "en" : "nb"} aria-label={`${ui.language_selector}: ${ui.switch_language}`}>
-            <span class="text-base leading-none" aria-hidden="true">{context.language === "no" ? "🇬🇧" : "🇳🇴"}</span>
-            <span>{ui.switch_language}</span>
-          </a>
+          <details class="language-dropdown dropdown dropdown-end">
+            <summary
+              class="btn btn-outline btn-sm gap-1 normal-case sm:btn-md"
+              aria-label={`${ui.language_selector}: ${currentLanguageName}`}
+            >
+              {currentLanguage}
+              <svg aria-hidden="true" width="12" height="8" viewBox="0 0 12 8" fill="currentColor" class="ml-1 transition-transform duration-200">
+                <path d="M6 7.4L0 1.4L1.4 0L6 4.6L10.6 0L12 1.4L6 7.4Z" />
+              </svg>
+            </summary>
+            <ul class="menu dropdown-content z-50 mt-1 min-w-36 rounded-xs bg-base-100 p-1 shadow-lg">
+              <li>
+                <span class="rounded-xs px-3 py-2 text-sm font-semibold" aria-label={currentLanguageName} aria-current="true">{currentLanguage}</span>
+              </li>
+              <li>
+                <a class="rounded-xs px-3 py-2 text-sm hover:bg-base-200" href={switchUrl} lang={context.language === "no" ? "en" : "nb"} aria-label={ui.switch_language}>
+                  {alternateLanguage}
+                </a>
+              </li>
+            </ul>
+          </details>
         </div>
       </nav>
     </header>

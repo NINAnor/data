@@ -26,6 +26,14 @@
   height: 22rem;
 }
 
+.language-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.language-dropdown[open] summary svg {
+  transform: rotate(180deg);
+}
+
 .about-markdown > h1 {
   margin-bottom: 1.5rem;
   color: var(--color-primary);

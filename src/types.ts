@@ -175,6 +175,7 @@ export interface CatalogueInfo {
   collectionId: string;
   title: string;
   description: string;
+  endpoints: Array<{ title: string; url: string }>;
   contact: {
     name: string;
     email: string;

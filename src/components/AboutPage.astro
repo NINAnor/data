@@ -1,0 +1,47 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import AboutEnglish from "../content/about.en.md";
+import AboutNorwegian from "../content/about.no.md";
+import EndpointList from "./EndpointList.astro";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import { getSiteContext } from "../lib/site";
+import type { Language } from "../types";
+
+interface Props {
+  locale: Language;
+}
+
+const { locale } = Astro.props;
+const alternateLocale: Language = locale === "en" ? "no" : "en";
+const context = await getSiteContext(locale);
+const AboutContent = locale === "en" ? AboutEnglish : AboutNorwegian;
+const title = locale === "en" ? "About the catalog" : "Om katalogen";
+---
+
+<SiteLayout
+  title={title}
+  context={context}
+  switchUrl={getRelativeLocaleUrl(alternateLocale, "about/")}
+  hidePageHeading
+>
+  <div class="about-markdown mx-auto max-w-4xl">
+    <AboutContent />
+
+    <section class="mt-10 space-y-4" aria-labelledby="catalogue-instance-heading">
+      <h2 id="catalogue-instance-heading" class="text-2xl font-bold text-primary">
+        {context.ui.pycsw_instance}
+      </h2>
+      <EndpointList endpoints={[{ title: context.ui.pycsw_instance, url: context.catalogue.url }]} />
+    </section>
+
+    <section class="mt-10 space-y-4" aria-labelledby="api-endpoints-heading">
+      <div>
+        <h2 id="api-endpoints-heading" class="text-2xl font-bold text-primary">
+          {context.ui.api_endpoints}
+        </h2>
+        <p class="mt-2 text-base-content/80">{context.ui.endpoint_description}</p>
+      </div>
+      <EndpointList endpoints={context.catalogue.endpoints} />
+    </section>
+  </div>
+</SiteLayout>

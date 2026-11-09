@@ -40,6 +40,8 @@ The API must allow browser CORS access for the search page. It must expose OGC A
 ## Site behavior
 
 - English at `/` and Norwegian Bokmål at `/no/`, with equivalent-page language links.
+- Shared navigation links the catalog to NINA Maps and to a bilingual About page at `/about/` and `/no/about/`.
+- About page describes the generic catalog and lists the configured pycsw instance plus its discovered OGC API and service endpoints.
 - Astro i18n routing keeps English as the unprefixed default and generates localized links with `astro:i18n`.
 - Homepage cards are ordered by metadata update date; additional records load in groups of 12.
 - Search supports text, all-selected-keyword matching, metadata update date range, and drawn bounding boxes. Search state is shareable through the URL; results use 10-record pages.

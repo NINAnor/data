@@ -1,0 +1,23 @@
+---
+interface Props {
+  endpoints: Array<{ title: string; url: string }>;
+}
+
+const { endpoints } = Astro.props;
+---
+
+<ul class="divide-y divide-base-300 rounded-box border border-base-300 bg-base-100">
+  {endpoints.map((endpoint) => (
+    <li class="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(12rem,1fr)_2fr] sm:gap-6">
+      <span class="font-medium">{endpoint.title}</span>
+      <a
+        class="link link-primary break-all"
+        href={endpoint.url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {endpoint.url}
+      </a>
+    </li>
+  ))}
+</ul>

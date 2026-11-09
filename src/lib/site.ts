@@ -13,6 +13,7 @@ const NORWEGIAN_ORGANIZATION = "Norsk institutt for naturforskning (NINA)";
 interface ApiLink {
   rel?: string;
   href?: string;
+  title?: string;
 }
 
 interface LandingPageDocument {
@@ -27,6 +28,7 @@ interface CollectionSummary {
   description?: string;
   itemType?: string;
   type?: string;
+  links?: ApiLink[];
 }
 
 interface CollectionsDocument {
@@ -91,6 +93,24 @@ export async function getCatalogueInfo(): Promise<CatalogueInfo> {
         throw new Error(`OGC_COLLECTION_ID '${requestedCollection}' is not exposed by the API`);
       }
 
+      const endpoints = [
+        { title: "OGC API landing page", url: linkedUrl(landing, "self", "?f=json") },
+        { title: "Collections", url: linkedUrl(landing, "data", "collections?f=json") },
+        {
+          title: "Records",
+          url:
+            collection.links?.find((link) => link.rel === "items")?.href ||
+            new URL(`collections/${encodeURIComponent(collection.id)}/items`, `${url}/`).toString(),
+        },
+        {
+          title: "OpenAPI definition",
+          url: linkedUrl(landing, "service-desc", "openapi?f=json"),
+        },
+        ...(landing.links || [])
+          .filter((link) => link.rel === "service" && link.href)
+          .map((link) => ({ title: link.title || "Catalogue service", url: link.href! })),
+      ];
+
       const contact = openApi.info?.contact;
       return {
         url,
@@ -98,6 +118,7 @@ export async function getCatalogueInfo(): Promise<CatalogueInfo> {
         title: landing.title || collection.title || openApi.info?.title || "NINA Public Catalog",
         description:
           landing.description || collection.description || openApi.info?.description || "",
+        endpoints,
         contact: {
           name: contact?.name || FALLBACK_ORGANIZATION,
           email: contact?.email || "firmapost@nina.no",

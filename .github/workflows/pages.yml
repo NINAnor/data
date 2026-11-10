@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pages: read
@@ -59,6 +59,7 @@ jobs:
         run: pnpm build
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          BYPASS_HEADER_VALUE: ${{ secrets.BYPASS_HEADER_VALUE }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

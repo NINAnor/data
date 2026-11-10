@@ -1,5 +1,5 @@
 import process from "node:process";
-import { sharedFetch } from "@camptocamp/ogc-client";
+import { fetchCatalogueResource } from "./catalogue-fetch";
 import uiStrings from "../i18n.json";
 import type { CatalogueInfo, FooterInfo, InterfaceStrings, Language, SiteContext } from "../types";
 
@@ -60,7 +60,11 @@ export function getCatalogueUrl(): string {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await sharedFetch(url, "GET", true);
+  const response = await fetchCatalogueResource(
+    url,
+    getCatalogueUrl(),
+    "application/json,application/schema+json",
+  );
   if (!response.ok)
     throw new Error(`Catalogue metadata request failed (${response.status}): ${url}`);
   return (await response.json()) as T;

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { OgcApiEndpoint, sharedFetch } from "@camptocamp/ogc-client";
+import { OgcApiEndpoint } from "@camptocamp/ogc-client";
 import { getCatalogueInfo, getCatalogueUrl } from "./site";
+import { fetchCatalogueResource } from "./catalogue-fetch";
 import { parseIsoMetadata } from "./metadata";
 import type {
   CatalogueRecord,
@@ -24,7 +25,11 @@ function endpointFor(url = getCatalogueUrl()): OgcApiEndpoint {
 }
 
 async function fetchJson(url: string): Promise<RecordsDocument> {
-  const response = await sharedFetch(url, "GET", true);
+  const response = await fetchCatalogueResource(
+    url,
+    getCatalogueUrl(),
+    "application/json,application/schema+json",
+  );
   if (!response.ok) throw new Error(`Catalogue request failed (${response.status}): ${url}`);
   return (await response.json()) as RecordsDocument;
 }
@@ -198,7 +203,11 @@ export async function loadDatasetDetails(
         if (!link) throw new Error(`Record ${summary.identifier} does not expose a self link`);
         const url = new URL(link);
         url.searchParams.set("f", "xml");
-        const response = await sharedFetch(url.toString(), "GET", false, "application/xml");
+        const response = await fetchCatalogueResource(
+          url.toString(),
+          getCatalogueUrl(),
+          "application/xml",
+        );
         if (!response.ok)
           throw new Error(`ISO metadata request failed (${response.status}): ${url}`);
         const metadata = parseIsoMetadata(await response.text());
